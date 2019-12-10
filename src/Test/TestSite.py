@@ -2,7 +2,7 @@ import shutil
 import os
 
 import pytest
-from Site import SiteManager
+from ..Site import SiteManager
 
 TEST_DATA_PATH = "src/Test/testdata"
 

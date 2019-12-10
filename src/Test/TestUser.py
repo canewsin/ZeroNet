@@ -1,6 +1,6 @@
 import pytest
 
-from Crypt import CryptBitcoin
+from ..Crypt import CryptBitcoin
 
 
 @pytest.mark.usefixtures("resetSettings")

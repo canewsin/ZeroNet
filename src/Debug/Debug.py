@@ -1,7 +1,7 @@
 import sys
 import os
 import re
-from Config import config
+from ..Config import config
 
 
 # Non fatal exception

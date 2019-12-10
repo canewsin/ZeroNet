@@ -9,7 +9,7 @@ import logging
 import base64
 import gevent
 
-from Config import config
+from ..Config import config
 
 
 def atomicWrite(dest, content, mode="wb"):
@@ -27,7 +27,7 @@ def atomicWrite(dest, content, mode="wb"):
             os.unlink(dest + "-tmpold")  # Remove old file
         return True
     except Exception as err:
-        from Debug import Debug
+        from ..Debug import Debug
         logging.error(
             "File %s write failed: %s, (%s) reverting..." %
             (dest, Debug.formatException(err), Debug.formatStack())

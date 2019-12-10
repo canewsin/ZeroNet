@@ -6,8 +6,7 @@ import importlib
 import gevent
 import gevent.hub
 
-from Config import config
-from . import Debug
+from ..Config import config
 
 last_error = None
 

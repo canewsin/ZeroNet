@@ -5,10 +5,10 @@ import shutil
 import time
 from collections import defaultdict
 
-from Debug import Debug
-from Config import config
+from ..Debug import Debug
+from ..Config import config
 
-import plugins
+from ... import plugins
 
 import importlib
 

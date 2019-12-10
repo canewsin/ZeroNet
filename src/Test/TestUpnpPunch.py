@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 import pytest
 import mock
 
-from util import UpnpPunch as upnp
+from ..util import UpnpPunch as upnp
 
 
 @pytest.fixture

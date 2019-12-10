@@ -1,10 +1,10 @@
 import time
 import os
 
-from Db.Db import Db, DbTableError
-from Config import config
-from Plugin import PluginManager
-from Debug import Debug
+from ..Db.Db import Db, DbTableError
+from ..Config import config
+from ..Plugin import PluginManager
+from ..Debug import Debug
 
 
 @PluginManager.acceptPlugins

@@ -8,12 +8,12 @@ import itertools
 # Third party modules
 import gevent
 
-from Debug import Debug
-from Config import config
-from util import RateLimit
-from util import Msgpack
-from util import helper
-from Plugin import PluginManager
+from ..Debug import Debug
+from ..Config import config
+from ..util import RateLimit
+from ..util import Msgpack
+from ..util import helper
+from ..Plugin import PluginManager
 from contextlib import closing
 
 FILE_BUFF = 1024 * 512

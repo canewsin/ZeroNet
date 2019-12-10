@@ -63,6 +63,9 @@ class Config(object):
         elif this_file.endswith("usr/share/zeronet/src/Config.py"):
             # Running from non-writeable location, e.g., AppImage
             start_dir = os.path.expanduser("~/ZeroNet")
+        elif this_file.endswith("app.zip/zeronet/src/Config.py"):
+            # Running from ChaquoPy Implementation for Android
+            start_dir = this_file.replace("/src/Config.py","")
         else:
             start_dir = "."
 
@@ -446,7 +449,7 @@ class Config(object):
                 setattr(self, key, val)
 
     def loadPlugins(self):
-        from Plugin import PluginManager
+        from .Plugin import PluginManager
 
         @PluginManager.acceptPlugins
         class ConfigPlugin(object):

@@ -15,7 +15,7 @@ update_after_shutdown = False  # If set True then update and restart zeronet aft
 restart_after_shutdown = False  # If set True then restart zeronet after main loop ended
 
 # Load config
-from Config import config
+from .Config import config
 config.parse(silent=True)  # Plugins need to access the configuration
 if not config.arguments:  # Config parse failed, show the help screen and exit
     config.parse()
@@ -33,7 +33,7 @@ if not os.path.isfile("%s/users.json" % config.data_dir):
     open("%s/users.json" % config.data_dir, "w").write("{}")
 
 if config.action == "main":
-    from util import helper
+    from .util import helper
     try:
         lock = helper.openLocked("%s/lock.pid" % config.data_dir, "w")
         lock.write("%s" % os.getpid())
@@ -56,10 +56,10 @@ config.initLogging()
 
 
 # Debug dependent configuration
-from Debug import DebugHook
+from .Debug import DebugHook
 
 # Load plugins
-from Plugin import PluginManager
+from .Plugin import PluginManager
 PluginManager.plugin_manager.loadPlugins()
 config.loadPlugins()
 config.parse()  # Parse again to add plugin configuration options
@@ -78,14 +78,14 @@ if config.msgpack_purepython:
 
 # Socket monkey patch
 if config.proxy:
-    from util import SocksProxy
+    from .util import SocksProxy
     import urllib.request
     logging.info("Patching sockets to socks proxy: %s" % config.proxy)
     if config.fileserver_ip == "*":
         config.fileserver_ip = '127.0.0.1'  # Do not accept connections anywhere but localhost
     SocksProxy.monkeyPatch(*config.proxy.split(":"))
 elif config.tor == "always":
-    from util import SocksProxy
+    from .util import SocksProxy
     import urllib.request
     logging.info("Patching sockets to tor socks proxy: %s" % config.tor_proxy)
     if config.fileserver_ip == "*":
@@ -96,7 +96,7 @@ elif config.bind:
     bind = config.bind
     if ":" not in config.bind:
         bind += ":0"
-    from util import helper
+    from .util import helper
     helper.socketBindMonkeyPatch(*bind.split(":"))
 
 # -- Actions --
@@ -115,8 +115,8 @@ class Actions(object):
     # Default action: Start serving UiServer and FileServer
     def main(self):
         global ui_server, file_server
-        from File import FileServer
-        from Ui import UiServer
+        from .File import FileServer
+        from .Ui import UiServer
         logging.info("Creating FileServer....")
         file_server = FileServer()
         logging.info("Creating UiServer....")
@@ -124,7 +124,7 @@ class Actions(object):
         file_server.ui_server = ui_server
 
         logging.info("Removing old SSL certs...")
-        from Crypt import CryptConnection
+        from .Crypt import CryptConnection
         CryptConnection.manager.removeCerts()
 
         logging.info("Starting servers....")
@@ -135,7 +135,7 @@ class Actions(object):
 
     def siteCreate(self):
         logging.info("Generating new privatekey...")
-        from Crypt import CryptBitcoin
+        from .Crypt import CryptBitcoin
         privatekey = CryptBitcoin.newPrivatekey()
         logging.info("----------------------------------------------------------------------")
         logging.info("Site private key: %s" % privatekey)
@@ -151,8 +151,8 @@ class Actions(object):
                 logging.info("Please, secure it now, you going to need it to modify your site!")
 
         logging.info("Creating directory structure...")
-        from Site.Site import Site
-        from Site import SiteManager
+        from .Site.Site import Site
+        from .Site import SiteManager
         SiteManager.site_manager.load()
 
         os.mkdir("%s/%s" % (config.data_dir, address))
@@ -167,15 +167,15 @@ class Actions(object):
         logging.info("Site created!")
 
     def siteSign(self, address, privatekey=None, inner_path="content.json", publish=False, remove_missing_optional=False):
-        from Site.Site import Site
-        from Site import SiteManager
-        from Debug import Debug
+        from .Site.Site import Site
+        from .Site import SiteManager
+        from .Debug import Debug
         SiteManager.site_manager.load()
         logging.info("Signing site: %s..." % address)
         site = Site(address, allow_create=False)
 
         if not privatekey:  # If no privatekey defined
-            from User import UserManager
+            from .User import UserManager
             user = UserManager.user_manager.get()
             if user:
                 site_data = user.getSiteData(address)
@@ -196,8 +196,8 @@ class Actions(object):
 
     def siteVerify(self, address):
         import time
-        from Site.Site import Site
-        from Site import SiteManager
+        from .Site.Site import Site
+        from .Site import SiteManager
         SiteManager.site_manager.load()
 
         s = time.time()
@@ -231,8 +231,8 @@ class Actions(object):
             logging.error("[ERROR] Error during verifying site files!")
 
     def dbRebuild(self, address):
-        from Site.Site import Site
-        from Site import SiteManager
+        from .Site.Site import Site
+        from .Site import SiteManager
         SiteManager.site_manager.load()
 
         logging.info("Rebuilding site sql cache: %s..." % address)
@@ -245,8 +245,8 @@ class Actions(object):
             logging.error(err)
 
     def dbQuery(self, address, query):
-        from Site.Site import Site
-        from Site import SiteManager
+        from .Site.Site import Site
+        from .Site import SiteManager
         SiteManager.site_manager.load()
 
         import json
@@ -257,13 +257,13 @@ class Actions(object):
         print(json.dumps(result, indent=4))
 
     def siteAnnounce(self, address):
-        from Site.Site import Site
-        from Site import SiteManager
+        from .Site.Site import Site
+        from .Site import SiteManager
         SiteManager.site_manager.load()
 
         logging.info("Opening a simple connection server")
         global file_server
-        from File import FileServer
+        from .File import FileServer
         file_server = FileServer("127.0.0.1", 1234)
         file_server.start()
 
@@ -276,13 +276,13 @@ class Actions(object):
         print(site.peers)
 
     def siteDownload(self, address):
-        from Site.Site import Site
-        from Site import SiteManager
+        from .Site.Site import Site
+        from .Site import SiteManager
         SiteManager.site_manager.load()
 
         logging.info("Opening a simple connection server")
         global file_server
-        from File import FileServer
+        from .File import FileServer
         file_server = FileServer("127.0.0.1", 1234)
         file_server_thread = gevent.spawn(file_server.start, check_sites=False)
 
@@ -305,8 +305,8 @@ class Actions(object):
 
 
     def siteNeedFile(self, address, inner_path):
-        from Site.Site import Site
-        from Site import SiteManager
+        from .Site.Site import Site
+        from .Site import SiteManager
         SiteManager.site_manager.load()
 
         def checker():
@@ -318,7 +318,7 @@ class Actions(object):
 
         logging.info("Opening a simple connection server")
         global file_server
-        from File import FileServer
+        from .File import FileServer
         file_server = FileServer("127.0.0.1", 1234)
         file_server_thread = gevent.spawn(file_server.start, check_sites=False)
 
@@ -328,7 +328,7 @@ class Actions(object):
 
     def siteCmd(self, address, cmd, parameters):
         import json
-        from Site import SiteManager
+        from .Site import SiteManager
 
         site = SiteManager.site_manager.get(address)
 
@@ -361,10 +361,10 @@ class Actions(object):
 
     def sitePublish(self, address, peer_ip=None, peer_port=15441, inner_path="content.json"):
         global file_server
-        from Site.Site import Site
-        from Site import SiteManager
-        from File import FileServer  # We need fileserver to handle incoming file requests
-        from Peer import Peer
+        from .Site.Site import Site
+        from .Site import SiteManager
+        from .File import FileServer  # We need fileserver to handle incoming file requests
+        from .Peer import Peer
         file_server = FileServer()
         site = SiteManager.site_manager.get(address)
         logging.info("Loading site...")
@@ -403,7 +403,7 @@ class Actions(object):
 
     # Crypto commands
     def cryptPrivatekeyToAddress(self, privatekey=None):
-        from Crypt import CryptBitcoin
+        from .Crypt import CryptBitcoin
         if not privatekey:  # If no privatekey in args then ask it now
             import getpass
             privatekey = getpass.getpass("Private key (input hidden):")
@@ -411,15 +411,15 @@ class Actions(object):
         print(CryptBitcoin.privatekeyToAddress(privatekey))
 
     def cryptSign(self, message, privatekey):
-        from Crypt import CryptBitcoin
+        from .Crypt import CryptBitcoin
         print(CryptBitcoin.sign(message, privatekey))
 
     def cryptVerify(self, message, sign, address):
-        from Crypt import CryptBitcoin
+        from .Crypt import CryptBitcoin
         print(CryptBitcoin.verify(message, address, sign))
 
     def cryptGetPrivatekey(self, master_seed, site_address_index=None):
-        from Crypt import CryptBitcoin
+        from .Crypt import CryptBitcoin
         if len(master_seed) != 64:
             logging.error("Error: Invalid master seed length: %s (required: 64)" % len(master_seed))
             return False
@@ -432,13 +432,13 @@ class Actions(object):
             peer_port = 15441
         logging.info("Opening a simple connection server")
         global file_server
-        from Connection import ConnectionServer
+        from .Connection import ConnectionServer
         file_server = ConnectionServer("127.0.0.1", 1234)
         file_server.start(check_connections=False)
-        from Crypt import CryptConnection
+        from .Crypt import CryptConnection
         CryptConnection.manager.loadCerts()
 
-        from Peer import Peer
+        from .Peer import Peer
         logging.info("Pinging 5 times peer: %s:%s..." % (peer_ip, int(peer_port)))
         s = time.time()
         peer = Peer(peer_ip, peer_port)
@@ -476,13 +476,13 @@ class Actions(object):
     def peerGetFile(self, peer_ip, peer_port, site, filename, benchmark=False):
         logging.info("Opening a simple connection server")
         global file_server
-        from Connection import ConnectionServer
+        from .Connection import ConnectionServer
         file_server = ConnectionServer("127.0.0.1", 1234)
         file_server.start(check_connections=False)
-        from Crypt import CryptConnection
+        from .Crypt import CryptConnection
         CryptConnection.manager.loadCerts()
 
-        from Peer import Peer
+        from .Peer import Peer
         logging.info("Getting %s/%s from peer: %s:%s..." % (site, filename, peer_ip, peer_port))
         peer = Peer(peer_ip, peer_port)
         s = time.time()
@@ -497,13 +497,13 @@ class Actions(object):
     def peerCmd(self, peer_ip, peer_port, cmd, parameters):
         logging.info("Opening a simple connection server")
         global file_server
-        from Connection import ConnectionServer
+        from .Connection import ConnectionServer
         file_server = ConnectionServer()
         file_server.start(check_connections=False)
-        from Crypt import CryptConnection
+        from .Crypt import CryptConnection
         CryptConnection.manager.loadCerts()
 
-        from Peer import Peer
+        from .Peer import Peer
         peer = Peer(peer_ip, peer_port)
 
         import json

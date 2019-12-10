@@ -6,7 +6,7 @@ import re
 import html
 import string
 
-from Config import config
+from ..Config import config
 
 translates = []
 
@@ -38,7 +38,7 @@ class Translate(dict):
 
         if config.debug:
             # Auto reload FileRequest on change
-            from Debug import DebugReloader
+            from ..Debug import DebugReloader
             DebugReloader.watcher.addCallback(self.load)
 
         translates.append(self)

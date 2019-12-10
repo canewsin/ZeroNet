@@ -11,17 +11,17 @@ import atexit
 
 import gevent
 
-from Config import config
-from Crypt import CryptRsa
-from Site import SiteManager
+from ..Config import config
+from ..Crypt import CryptRsa
+from ..Site import SiteManager
 import socks
 try:
     from gevent.coros import RLock
 except:
     from gevent.lock import RLock
-from util import helper
-from Debug import Debug
-from Plugin import PluginManager
+from ..util import helper
+from ..Debug import Debug
+from ..Plugin import PluginManager
 
 
 @PluginManager.acceptPlugins
@@ -83,7 +83,7 @@ class TorManager(object):
     def setStatus(self, status):
         self.status = status
         if "main" in sys.modules: # import main has side-effects, breaks tests
-            import main
+            from .. import main
             if "ui_server" in dir(main):
                 main.ui_server.updateWebsocket()
 

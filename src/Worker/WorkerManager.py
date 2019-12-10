@@ -5,10 +5,10 @@ import collections
 import gevent
 
 from .Worker import Worker
-from Config import config
-from util import helper
-from Plugin import PluginManager
-import util
+from ..Config import config
+from ..util import helper
+from ..Plugin import PluginManager
+from .. import util
 
 
 @PluginManager.acceptPlugins

@@ -1,7 +1,7 @@
 import os
 
-from Config import config
-from Crypt import CryptConnection
+from ..Config import config
+from ..Crypt import CryptConnection
 
 
 class TestCryptConnection:

@@ -3,7 +3,7 @@ import time
 import gevent
 import pytest
 
-import util
+from .. import util
 
 
 class ExampleClass(object):

@@ -7,11 +7,11 @@ import collections
 import gevent
 
 import io
-from Debug import Debug
-from Config import config
-from util import helper
+from ..Debug import Debug
+from ..Config import config
+from ..util import helper
 from .PeerHashfield import PeerHashfield
-from Plugin import PluginManager
+from ..Plugin import PluginManager
 
 if config.use_tempfiles:
     import tempfile

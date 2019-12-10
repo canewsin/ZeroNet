@@ -1,4 +1,4 @@
-from Crypt import CryptBitcoin
+ from ..Crypt import CryptBitcoin
 
 
 class TestCryptBitcoin:

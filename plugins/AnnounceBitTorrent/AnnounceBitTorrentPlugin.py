@@ -9,18 +9,18 @@ import socks
 import sockshandler
 import gevent
 
-from Plugin import PluginManager
-from Config import config
-from Debug import Debug
-from util import helper
+from ...src.Plugin import PluginManager
+from ...src.Config import config
+from ...src.Debug import Debug
+from ...src.util import helper
 
 
 # We can only import plugin host clases after the plugins are loaded
 @PluginManager.afterLoad
 def importHostClasses():
     global Peer, AnnounceError
-    from Peer import Peer
-    from Site.SiteAnnouncer import AnnounceError
+    from ...src.Peer import Peer
+    from ...src.Site.SiteAnnouncer import AnnounceError
 
 
 @PluginManager.registerTo("SiteAnnouncer")

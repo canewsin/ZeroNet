@@ -5,8 +5,8 @@ import logging
 import time
 import functools
 
-from Config import config
-from util import helper
+from ..Config import config
+from ..util import helper
 
 
 # Find files with extension in path

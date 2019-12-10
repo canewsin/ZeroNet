@@ -8,13 +8,13 @@ import urllib
 
 import gevent
 
-from Config import config
-from Site import SiteManager
-from User import UserManager
-from Plugin import PluginManager
-from Ui.UiWebsocket import UiWebsocket
-from Crypt import CryptHash
-from util import helper
+from ..Config import config
+from ..Site import SiteManager
+from ..User import UserManager
+from ..Plugin import PluginManager
+from ..Ui.UiWebsocket import UiWebsocket
+from ..Crypt import CryptHash
+from ..util import helper
 
 status_texts = {
     200: "200 OK",
@@ -555,7 +555,7 @@ class UiRequest(object):
             # If debugging merge *.css to all.css and *.js to all.js
             site = self.server.sites.get(address)
             if site and site.settings["own"]:
-                from Debug import DebugMedia
+                from ..Debug import DebugMedia
                 DebugMedia.merge(file_path)
 
         if not address or address == ".":
@@ -609,7 +609,7 @@ class UiRequest(object):
             else:
                 if config.debug and match.group("inner_path").startswith("all."):
                     # If debugging merge *.css to all.css and *.js to all.js
-                    from Debug import DebugMedia
+                    from ..Debug import DebugMedia
                     DebugMedia.merge(file_path)
                 return self.actionFile(file_path, header_length=False)  # Dont's send site to allow plugins append content
 
@@ -749,7 +749,7 @@ class UiRequest(object):
     # Debug last error
     def actionDebug(self):
         # Raise last error from DebugHook
-        import main
+        from .. import main
         last_error = main.DebugHook.last_error
         if last_error:
             raise last_error[0](last_error[1]).with_traceback(last_error[2])

@@ -2,7 +2,7 @@ import time
 
 import gevent
 
-from util import RateLimit
+from ..util import RateLimit
 
 
 # Time is around limit +/- 0.05 sec

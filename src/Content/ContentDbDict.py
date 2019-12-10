@@ -2,8 +2,8 @@ import time
 import os
 
 from . import ContentDb
-from Debug import Debug
-from Config import config
+from ..Debug import Debug
+from ..Config import config
 
 
 class ContentDbDict(dict):

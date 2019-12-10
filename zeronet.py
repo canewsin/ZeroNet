@@ -14,8 +14,12 @@ def main():
         print("- Starting ZeroNet...")
 
     main = None
+    from .src.Config import config
+    print(config.start_dir)
+    sys.path.insert(0,config.start_dir + '/src')
+    sys.path.insert(0,config.start_dir + '/plugins')
     try:
-        import main
+        from .src import main
         main.start()
     except Exception as err:  # Prevent closing
         import traceback
@@ -25,13 +29,19 @@ def main():
         except Exception as log_err:
             print("Failed to log error:", log_err)
             traceback.print_exc()
-        from Config import config
+        from .src.Config import config
         error_log_path = config.log_dir + "/error.log"
-        traceback.print_exc(file=open(error_log_path, "w"))
+        print("error_log_path---{}".format(error_log_path))
+        # if os.path.is_file(error_log_path):
+        # file = open(error_log_path, "w")
+        # traceback.print_exc(file)
+        traceback.print_exc(file = open(error_log_path, "w"))
+
         print("---")
         print("Please report it: https://github.com/HelloZeroNet/ZeroNet/issues/new?assignees=&labels=&template=bug-report.md")
         if sys.platform.startswith("win"):
             displayErrorMessage(err, error_log_path)
+        # print(err)
 
     if main and (main.update_after_shutdown or main.restart_after_shutdown):  # Updater
         if main.update_after_shutdown:
@@ -113,6 +123,7 @@ def restart():
 
 def start():
     app_dir = os.path.dirname(os.path.abspath(__file__))
+    print(app_dir)
     os.chdir(app_dir)  # Change working dir to zeronet.py dir
     sys.path.insert(0, os.path.join(app_dir, "src/lib"))  # External liblary directory
     sys.path.insert(0, os.path.join(app_dir, "src"))  # Imports relative to src

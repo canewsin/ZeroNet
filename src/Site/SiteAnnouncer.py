@@ -6,11 +6,11 @@ import collections
 
 import gevent
 
-from Plugin import PluginManager
-from Config import config
-from Debug import Debug
-from util import helper
-import util
+from ..Plugin import PluginManager
+from ..Config import config
+from ..Debug import Debug
+from ..util import helper
+from .. import util
 
 
 class AnnounceError(Exception):

@@ -42,13 +42,13 @@ TEST_DATA_PATH  = 'src/Test/testdata'
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + "/../lib"))  # External modules directory
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + "/.."))  # Imports relative to src dir
 
-from Config import config
+from ..Config import config
 config.argv = ["none"]  # Dont pass any argv to config parser
 config.parse(silent=True, parse_config=False)  # Plugins need to access the configuration
 config.action = "test"
 
 # Load plugins
-from Plugin import PluginManager
+from ..Plugin import PluginManager
 
 config.data_dir = TEST_DATA_PATH  # Use test data for unittests
 config.debug = True
@@ -91,19 +91,19 @@ fmt = logging.Formatter(fmt='+%(relative)ss %(levelname)-8s %(name)s %(message)s
 [hndl.addFilter(TimeFilter()) for hndl in log.handlers]
 [hndl.setFormatter(fmt) for hndl in log.handlers]
 
-from Site.Site import Site
-from Site import SiteManager
-from User import UserManager
-from File import FileServer
-from Connection import ConnectionServer
-from Crypt import CryptConnection
-from Crypt import CryptBitcoin
-from Ui import UiWebsocket
-from Tor import TorManager
-from Content import ContentDb
-from util import RateLimit
-from Db import Db
-from Debug import Debug
+from ..Site.Site import Site
+from ..Site import SiteManager
+from ..User import UserManager
+from ..File import FileServer
+from ..Connection import ConnectionServer
+from ..Crypt import CryptConnection
+from ..Crypt import CryptBitcoin
+from ..Ui import UiWebsocket
+from ..Tor import TorManager
+from ..Content import ContentDb
+from ..util import RateLimit
+from ..Db import Db
+from ..Debug import Debug
 
 
 def cleanup():

@@ -3,9 +3,9 @@ import io
 import pytest
 import time
 
-from Connection import ConnectionServer
-from Connection import Connection
-from File import FileServer
+from ..Connection import ConnectionServer
+from ..Connection import Connection
+from ..File import FileServer
 
 
 @pytest.mark.usefixtures("resetSettings")

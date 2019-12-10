@@ -5,8 +5,8 @@ import ssl
 import hashlib
 import random
 
-from Config import config
-from util import helper
+from ..Config import config
+from ..util import helper
 
 
 class CryptConnectionManager:

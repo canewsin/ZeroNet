@@ -1,4 +1,4 @@
-from Translate import Translate
+from ..Translate import Translate
 
 class TestTranslate:
     def testTranslateStrict(self):

@@ -4,8 +4,8 @@ import urllib.parse
 import re
 import time
 
-from Debug import Debug
-from util import UpnpPunch
+from ..Debug import Debug
+from ..util import UpnpPunch
 
 
 class PeerPortchecker(object):

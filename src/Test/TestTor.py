@@ -3,9 +3,9 @@ import time
 import pytest
 import mock
 
-from File import FileServer
-from Crypt import CryptRsa
-from Config import config
+from ..File import FileServer
+from ..Crypt import CryptRsa
+from ..Config import config
 
 @pytest.mark.usefixtures("resetSettings")
 @pytest.mark.usefixtures("resetTempSettings")

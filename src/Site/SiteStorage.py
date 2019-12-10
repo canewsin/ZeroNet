@@ -9,14 +9,14 @@ from collections import defaultdict
 import sqlite3
 import gevent.event
 
-import util
-from util import SafeRe
-from Db.Db import Db, DbTableError
-from Debug import Debug
-from Config import config
-from util import helper
-from Plugin import PluginManager
-from Translate import translate as _
+from .. import util
+from ..util import SafeRe
+from ..Db.Db import Db, DbTableError
+from ..Debug import Debug
+from ..Config import config
+from ..util import helper
+from ..Plugin import PluginManager
+from ..Translate import translate as _
 
 
 @PluginManager.acceptPlugins

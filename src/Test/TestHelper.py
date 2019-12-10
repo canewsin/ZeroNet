@@ -3,8 +3,8 @@ import struct
 import os
 
 import pytest
-from util import helper
-from Config import config
+from ..util import helper
+from ..Config import config
 
 
 @pytest.mark.usefixtures("resetSettings")

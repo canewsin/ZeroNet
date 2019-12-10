@@ -1,6 +1,6 @@
 import pytest
 
-import Config
+from .. import Config
 
 
 @pytest.mark.usefixtures("resetSettings")

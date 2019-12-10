@@ -9,16 +9,16 @@ import logging
 
 import gevent
 
-from Config import config
-from Site import SiteManager
-from Crypt import CryptBitcoin
-from Debug import Debug
-from util import QueryJson, RateLimit
-from Plugin import PluginManager
-from Translate import translate as _
-from util import helper
-from util import SafeRe
-from Content.ContentManager import VerifyError, SignError
+from ..Config import config
+from ..Site import SiteManager
+from ..Crypt import CryptBitcoin
+from ..Debug import Debug
+from ..util import QueryJson, RateLimit
+from ..Plugin import PluginManager
+from ..Translate import translate as _
+from ..util import helper
+from ..util import SafeRe
+from ..Content.ContentManager import VerifyError, SignError
 
 
 @PluginManager.acceptPlugins
@@ -50,7 +50,7 @@ class UiWebsocket(object):
         if self.site.address == config.homepage and not self.site.page_requested:
             # Add open fileserver port message or closed port error to homepage at first request after start
             self.site.page_requested = True  # Dont add connection notification anymore
-            import main
+            from .. import main
             file_server = main.file_server
             if not file_server.port_opened or file_server.tor_manager.start_onions is None:
                 self.site.page_requested = False  # Not ready yet, check next time
@@ -85,7 +85,7 @@ class UiWebsocket(object):
                     self.handleRequest(req)
                 except Exception as err:
                     if config.debug:  # Allow websocket errors to appear on /Debug
-                        import main
+                        from .. import main
                         main.DebugHook.handleError()
                     self.log.error("WebSocket handleRequest error: %s \n %s" % (Debug.formatException(err), message))
                     if not self.hasPlugin("Multiuser"):
@@ -196,7 +196,7 @@ class UiWebsocket(object):
                     self.response(args[0], result)
             except Exception as err:
                 if config.debug:  # Allow websocket errors to appear on /Debug
-                    import main
+                    from .. import main
                     main.DebugHook.handleError()
                 self.log.error("WebSocket handleRequest error: %s" % Debug.formatException(err))
                 self.cmd("error", "Internal error: %s" % Debug.formatException(err, "html"))
@@ -283,7 +283,7 @@ class UiWebsocket(object):
         return ret
 
     def formatServerInfo(self):
-        import main
+        from .. import main
         file_server = main.file_server
         if file_server.port_opened == {}:
             ip_external = None
@@ -520,7 +520,7 @@ class UiWebsocket(object):
                 self.response(to, "ok")
         else:
             if len(site.peers) == 0:
-                import main
+                from .. import main
                 if any(main.file_server.port_opened.values()) or main.file_server.tor_manager.start_onions:
                     if notification:
                         self.cmd("notification", ["info", _["No peers found, but your content is ready to access."]])
@@ -1085,7 +1085,7 @@ class UiWebsocket(object):
                 )
                 websocket.cmd("updating")
 
-            import main
+            from .. import main
             main.update_after_shutdown = True
             SiteManager.site_manager.save()
             main.file_server.stop()
@@ -1098,13 +1098,13 @@ class UiWebsocket(object):
         )
 
     def actionServerPortcheck(self, to):
-        import main
+        from .. import main
         file_server = main.file_server
         file_server.portCheck()
         self.response(to, file_server.port_opened)
 
     def actionServerShutdown(self, to, restart=False):
-        import main
+        from .. import main
         if restart:
             main.restart_after_shutdown = True
         main.file_server.stop()
@@ -1130,7 +1130,7 @@ class UiWebsocket(object):
             return self.response(to, {"error": "Not a directory"})
 
     def actionConfigSet(self, to, key, value):
-        import main
+        from .. import main
         if key not in config.keys_api_change_allowed:
             self.response(to, {"error": "Forbidden you cannot set this config key"})
             return
@@ -1153,7 +1153,7 @@ class UiWebsocket(object):
             config.pending_changes[key] = value
 
         if key == "language":
-            import Translate
+            from .. import Translate
             for translate in Translate.translates:
                 translate.setLanguage(value)
             message = _["You have successfully changed the web interface's language!"] + "<br>"

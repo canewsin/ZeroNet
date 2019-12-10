@@ -1,6 +1,6 @@
 import io
 
-from util import Diff
+from ..util import Diff
 
 
 class TestDiff:

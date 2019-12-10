@@ -20,6 +20,17 @@ def getOpensslPath():
     else:
         lib_path = "/usr/local/ssl/lib/libcrypto.so"
 
+    from ..Config import config
+    # if config.start_dir.endwith("/app.zip/zeronet"):#cache/chaquopy/AssetFinder
+    #     lib_path = config.start_dir.replace("app.zip/zeronet","arm64-v8a.zip/_ssl.so")
+
+    print(config.start_dir)
+    if config.start_dir.endwith("/app.zip/zeronet"):
+        try:
+            lib_dir = "/system/lib/libcrypto.so"
+        except Exception as err:
+            logging.debug("OpenSSL lib not found in: %s (%s)" % (lib_dir, err))
+
     if os.path.isfile(lib_path):
         return lib_path
 

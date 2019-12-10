@@ -9,15 +9,15 @@ import msgpack
 from gevent.server import StreamServer
 from gevent.pool import Pool
 
-import util
-from util import helper
-from Debug import Debug
+from .. import util
+from ..util import helper
+from ..Debug import Debug
 from .Connection import Connection
-from Config import config
-from Crypt import CryptConnection
-from Crypt import CryptHash
-from Tor import TorManager
-from Site import SiteManager
+from ..Config import config
+from ..Crypt import CryptConnection
+from ..Crypt import CryptHash
+from ..Tor import TorManager
+from ..Site import SiteManager
 
 
 class ConnectionServer(object):

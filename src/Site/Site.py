@@ -12,18 +12,18 @@ import base64
 import gevent
 import gevent.pool
 
-import util
-from Config import config
-from Peer import Peer
-from Worker import WorkerManager
-from Debug import Debug
-from Content import ContentManager
+from .. import util
+from ..Config import config
+from ..Peer import Peer
+from ..Worker import WorkerManager
+from ..Debug import Debug
+from ..Content import ContentManager
 from .SiteStorage import SiteStorage
-from Crypt import CryptHash
-from util import helper
-from util import Diff
-from Plugin import PluginManager
-from File import FileServer
+from ..Crypt import CryptHash
+from ..util import helper
+from ..util import Diff
+from ..Plugin import PluginManager
+from ..File import FileServer
 from .SiteAnnouncer import SiteAnnouncer
 from . import SiteManager
 

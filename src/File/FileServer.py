@@ -7,15 +7,15 @@ import gevent
 import gevent.pool
 from gevent.server import StreamServer
 
-import util
-from util import helper
-from Config import config
+from .. import util
+from ..util import helper
+from ..Config import config
 from .FileRequest import FileRequest
-from Peer import PeerPortchecker
-from Site import SiteManager
-from Connection import ConnectionServer
-from Plugin import PluginManager
-from Debug import Debug
+from ..Peer import PeerPortchecker
+from ..Site import SiteManager
+from ..Connection import ConnectionServer
+from ..Plugin import PluginManager
+from ..Debug import Debug
 
 
 @PluginManager.acceptPlugins

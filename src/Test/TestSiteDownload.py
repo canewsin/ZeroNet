@@ -5,11 +5,11 @@ import mock
 import gevent
 import os
 
-from Connection import ConnectionServer
-from Config import config
-from File import FileRequest
-from File import FileServer
-from Site.Site import Site
+from ..Connection import ConnectionServer
+from ..Config import config
+from ..File import FileRequest
+from ..File import FileServer
+from ..Site.Site import Site
 from . import Spy
 
 

@@ -8,15 +8,15 @@ import sys
 
 import gevent
 
-from Debug import Debug
-from Crypt import CryptHash
-from Config import config
-from util import helper
-from util import Diff
-from util import SafeRe
-from Peer import PeerHashfield
+from ..Debug import Debug
+from ..Crypt import CryptHash
+from ..Config import config
+from ..util import helper
+from ..util import Diff
+from ..util import SafeRe
+from ..Peer import PeerHashfield
 from .ContentDbDict import ContentDbDict
-from Plugin import PluginManager
+from ..Plugin import PluginManager
 
 
 class VerifyError(Exception):

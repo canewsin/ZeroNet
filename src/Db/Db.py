@@ -9,10 +9,10 @@ import sys
 
 import gevent
 
-from Debug import Debug
+from ..Debug import Debug
 from .DbCursor import DbCursor
-from util import SafeRe
-from util import helper
+from ..util import SafeRe
+from ..util import helper
 
 opened_dbs = []
 

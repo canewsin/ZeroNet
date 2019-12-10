@@ -5,12 +5,12 @@ import binascii
 
 import gevent
 
-import util
-from Crypt import CryptBitcoin
-from Plugin import PluginManager
-from Config import config
-from util import helper
-from Debug import Debug
+from .. import util
+from ..Crypt import CryptBitcoin
+from ..Plugin import PluginManager
+from ..Config import config
+from ..util import helper
+from ..Debug import Debug
 
 
 @PluginManager.acceptPlugins

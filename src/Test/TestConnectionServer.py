@@ -5,9 +5,9 @@ import gevent
 import pytest
 import mock
 
-from Crypt import CryptConnection
-from Connection import ConnectionServer
-from Config import config
+from ..Crypt import CryptConnection
+from ..Connection import ConnectionServer
+from ..Config import config
 
 
 @pytest.mark.usefixtures("resetSettings")

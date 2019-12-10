@@ -7,11 +7,11 @@ try:
 except:
     from gevent.lock import RLock
 
-from Config import config
-from Debug import Debug
-from util import Msgpack
-from Crypt import CryptConnection
-from util import helper
+from ..Config import config
+from ..Debug import Debug
+from ..util import Msgpack
+from ..Crypt import CryptConnection
+from ..util import helper
 
 
 class Connection(object):
