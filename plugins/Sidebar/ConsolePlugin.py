@@ -1,11 +1,11 @@
 import re
 import logging
 
-from Plugin import PluginManager
-from Config import config
-from Debug import Debug
-from util import SafeRe
-from util.Flag import flag
+from src.Plugin import PluginManager
+from src.Config import config
+from src.Debug import Debug
+from src.util import SafeRe
+from src.util.Flag import flag
 
 
 class WsLogStreamer(logging.StreamHandler):

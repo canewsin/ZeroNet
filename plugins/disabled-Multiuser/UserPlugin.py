@@ -1,5 +1,5 @@
-from Config import config
-from Plugin import PluginManager
+from src.Config import config
+from src.Plugin import PluginManager
 
 allow_reload = False
 

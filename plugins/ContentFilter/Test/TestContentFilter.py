@@ -1,6 +1,6 @@
 import pytest
-from ContentFilter import ContentFilterPlugin
-from Site import SiteManager
+from ...ContentFilter import ContentFilterPlugin
+from src.Site import SiteManager
 
 
 @pytest.fixture

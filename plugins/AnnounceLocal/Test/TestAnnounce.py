@@ -5,9 +5,9 @@ import gevent
 import pytest
 import mock
 
-from AnnounceLocal import AnnounceLocalPlugin
-from File import FileServer
-from Test import Spy
+from ...AnnounceLocal import AnnounceLocalPlugin
+from src.File import FileServer
+from src.Test import Spy
 
 @pytest.fixture
 def announcer(file_server, site):

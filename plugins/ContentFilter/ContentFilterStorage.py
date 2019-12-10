@@ -4,10 +4,10 @@ import logging
 import collections
 import time
 
-from Debug import Debug
-from Plugin import PluginManager
-from Config import config
-from util import helper
+from src.Debug import Debug
+from src.Plugin import PluginManager
+from src.Config import config
+from src.util import helper
 
 class ContentFilterStorage(object):
     def __init__(self, site_manager):
@@ -29,7 +29,8 @@ class ContentFilterStorage(object):
             if key not in self.file_content:
                 self.file_content[key] = {}
 
-        self.include_filters = collections.defaultdict(set)  # Merged list of mutes and blacklists from all include
+        # Merged list of mutes and blacklists from all include
+        self.include_filters = collections.defaultdict(set)
         self.includeUpdateAll(update_site_dbs=False)
 
     def load(self):
@@ -54,7 +55,8 @@ class ContentFilterStorage(object):
         for include_path in self.file_content["includes"]:
             address, inner_path = include_path.split("/", 1)
             try:
-                content = self.site_manager.get(address).storage.loadJson(inner_path)
+                content = self.site_manager.get(
+                    address).storage.loadJson(inner_path)
             except Exception as err:
                 self.log.warning(
                     "Error loading include %s: %s" %
@@ -68,8 +70,10 @@ class ContentFilterStorage(object):
 
                 new_include_filters[key].update(val.keys())
 
-        mutes_added = new_include_filters["mutes"].difference(self.include_filters["mutes"])
-        mutes_removed = self.include_filters["mutes"].difference(new_include_filters["mutes"])
+        mutes_added = new_include_filters["mutes"].difference(
+            self.include_filters["mutes"])
+        mutes_removed = self.include_filters["mutes"].difference(
+            new_include_filters["mutes"])
 
         self.include_filters = new_include_filters
 
@@ -85,7 +89,8 @@ class ContentFilterStorage(object):
         num_siteblocks = len(self.include_filters["siteblocks"])
         self.log.debug(
             "Loaded %s mutes, %s blocked sites from %s includes in %.3fs" %
-            (num_mutes, num_siteblocks, len(self.file_content["includes"]), time.time() - s)
+            (num_mutes, num_siteblocks, len(
+                self.file_content["includes"]), time.time() - s)
         )
 
     def includeAdd(self, address, inner_path, description=None):
@@ -105,7 +110,8 @@ class ContentFilterStorage(object):
 
     def save(self):
         s = time.time()
-        helper.atomicWrite(self.file_path, json.dumps(self.file_content, indent=2, sort_keys=True).encode("utf8"))
+        helper.atomicWrite(self.file_path, json.dumps(
+            self.file_content, indent=2, sort_keys=True).encode("utf8"))
         self.log.debug("Saved in %.3fs" % (time.time() - s))
 
     def isMuted(self, auth_address):

@@ -2,14 +2,14 @@ import hashlib
 import base64
 import binascii
 
-import lib.pybitcointools as btctools
-from util import ThreadPool
-from Crypt import Crypt
+import src.lib.pybitcointools as btctools
+from src.util import ThreadPool
+from src.Crypt import Crypt
 
 ecc_cache = {}
 
 def eciesEncrypt(data, pubkey, ephemcurve=None, ciphername='aes-256-cbc'):
-    from lib import pyelliptic
+    from src.lib import pyelliptic
     pubkey_openssl = toOpensslPublickey(base64.b64decode(pubkey))
     curve, pubkey_x, pubkey_y, i = pyelliptic.ECC._decode_pubkey(pubkey_openssl)
     if ephemcurve is None:
@@ -49,7 +49,7 @@ def split(encrypted):
 
 
 def getEcc(privatekey=None):
-    from lib import pyelliptic
+    from src.lib import pyelliptic
     global ecc_cache
     if privatekey not in ecc_cache:
         if privatekey:

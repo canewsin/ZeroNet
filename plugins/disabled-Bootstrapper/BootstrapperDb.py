@@ -3,16 +3,17 @@ import re
 
 import gevent
 
-from Config import config
-from Db import Db
-from util import helper
+from src.Config import config
+from src.Db import Db
+from src.util import helper
 
 
 class BootstrapperDb(Db.Db):
     def __init__(self):
         self.version = 7
         self.hash_ids = {}  # hash -> id cache
-        super(BootstrapperDb, self).__init__({"db_name": "Bootstrapper"}, "%s/bootstrapper.db" % config.data_dir)
+        super(BootstrapperDb, self).__init__(
+            {"db_name": "Bootstrapper"}, "%s/bootstrapper.db" % config.data_dir)
         self.foreign_keys = True
         self.checkTables()
         self.updateHashCache()
@@ -21,8 +22,10 @@ class BootstrapperDb(Db.Db):
     def cleanup(self):
         while 1:
             time.sleep(4 * 60)
-            timeout = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time() - 60 * 40))
-            self.execute("DELETE FROM peer WHERE date_announced < ?", [timeout])
+            timeout = time.strftime(
+                "%Y-%m-%d %H:%M:%S", time.localtime(time.time() - 60 * 40))
+            self.execute(
+                "DELETE FROM peer WHERE date_announced < ?", [timeout])
 
     def updateHashCache(self):
         res = self.execute("SELECT * FROM hash")
@@ -40,7 +43,8 @@ class BootstrapperDb(Db.Db):
     def createTables(self):
         # Delete all tables
         self.execute("PRAGMA writable_schema = 1")
-        self.execute("DELETE FROM sqlite_master WHERE type IN ('table', 'index', 'trigger')")
+        self.execute(
+            "DELETE FROM sqlite_master WHERE type IN ('table', 'index', 'trigger')")
         self.execute("PRAGMA writable_schema = 0")
         self.execute("VACUUM")
         self.execute("PRAGMA INTEGRITY_CHECK")
@@ -89,31 +93,37 @@ class BootstrapperDb(Db.Db):
             hashes_ids_announced.append(self.getHashId(hash))
 
         # Check user
-        res = self.execute("SELECT peer_id FROM peer WHERE ? LIMIT 1", {"address": address, "port": port})
+        res = self.execute("SELECT peer_id FROM peer WHERE ? LIMIT 1", {
+                           "address": address, "port": port})
 
         user_row = res.fetchone()
         now = time.strftime("%Y-%m-%d %H:%M:%S")
         if user_row:
             peer_id = user_row["peer_id"]
-            self.execute("UPDATE peer SET date_announced = ? WHERE peer_id = ?", (now, peer_id))
+            self.execute(
+                "UPDATE peer SET date_announced = ? WHERE peer_id = ?", (now, peer_id))
         else:
             self.log.debug("New peer: %s signed: %s" % (address, onion_signed))
             if ip_type == "onion" and not onion_signed:
                 return len(hashes)
-            res = self.execute("INSERT INTO peer ?", {"type": ip_type, "address": address, "port": port, "date_announced": now})
+            res = self.execute("INSERT INTO peer ?", {
+                               "type": ip_type, "address": address, "port": port, "date_announced": now})
             peer_id = res.lastrowid
 
         # Check user's hashes
-        res = self.execute("SELECT * FROM peer_to_hash WHERE ?", {"peer_id": peer_id})
+        res = self.execute(
+            "SELECT * FROM peer_to_hash WHERE ?", {"peer_id": peer_id})
         hash_ids_db = [row["hash_id"] for row in res]
         if hash_ids_db != hashes_ids_announced:
             hash_ids_added = set(hashes_ids_announced) - set(hash_ids_db)
             hash_ids_removed = set(hash_ids_db) - set(hashes_ids_announced)
             if ip_type != "onion" or onion_signed:
                 for hash_id in hash_ids_added:
-                    self.execute("INSERT INTO peer_to_hash ?", {"peer_id": peer_id, "hash_id": hash_id})
+                    self.execute("INSERT INTO peer_to_hash ?", {
+                                 "peer_id": peer_id, "hash_id": hash_id})
                 if hash_ids_removed and delete_missing_hashes:
-                    self.execute("DELETE FROM peer_to_hash WHERE ?", {"peer_id": peer_id, "hash_id": list(hash_ids_removed)})
+                    self.execute("DELETE FROM peer_to_hash WHERE ?", {
+                                 "peer_id": peer_id, "hash_id": list(hash_ids_removed)})
 
             return len(hash_ids_added) + len(hash_ids_removed)
         else:
@@ -131,7 +141,8 @@ class BootstrapperDb(Db.Db):
             order_sql = ""
         where_sql = "hash_id = :hashid"
         if onions:
-            onions_escaped = ["'%s'" % re.sub("[^a-z0-9,]", "", onion) for onion in onions if type(onion) is str]
+            onions_escaped = ["'%s'" % re.sub(
+                "[^a-z0-9,]", "", onion) for onion in onions if type(onion) is str]
             where_sql += " AND address NOT IN (%s)" % ",".join(onions_escaped)
         elif address:
             where_sql += " AND NOT (address = :address AND port = :port)"
@@ -144,13 +155,16 @@ class BootstrapperDb(Db.Db):
             %s
             LIMIT :limit
         """ % (where_sql, order_sql)
-        res = self.execute(query, {"hashid": hashid, "address": address, "port": port, "limit": limit})
+        res = self.execute(
+            query, {"hashid": hashid, "address": address, "port": port, "limit": limit})
 
         for row in res:
             if row["type"] in need_types:
                 if row["type"] == "onion":
-                    packed = helper.packOnionAddress(row["address"], row["port"])
+                    packed = helper.packOnionAddress(
+                        row["address"], row["port"])
                 else:
-                    packed = helper.packAddress(str(row["address"]), row["port"])
+                    packed = helper.packAddress(
+                        str(row["address"]), row["port"])
                 back[row["type"]].append(packed)
         return back

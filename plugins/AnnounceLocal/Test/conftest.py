@@ -1,4 +1,4 @@
 from src.Test.conftest import *
 
-from Config import config
+from src.Config import config
 config.broadcast_port = 0

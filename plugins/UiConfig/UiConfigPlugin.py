@@ -1,10 +1,10 @@
 import io
 import os
 
-from Plugin import PluginManager
-from Config import config
-from Translate import Translate
-from util.Flag import flag
+from src.Plugin import PluginManager
+from src.Config import config
+from src.Translate import Translate
+from src.util.Flag import flag
 
 
 plugin_dir = os.path.dirname(__file__)
@@ -33,16 +33,19 @@ class UiRequestPlugin(object):
 
     def actionUiMedia(self, path, *args, **kwargs):
         if path.startswith("/uimedia/plugins/uiconfig/"):
-            file_path = path.replace("/uimedia/plugins/uiconfig/", plugin_dir + "/media/")
+            file_path = path.replace(
+                "/uimedia/plugins/uiconfig/", plugin_dir + "/media/")
             if config.debug and (file_path.endswith("all.js") or file_path.endswith("all.css")):
                 # If debugging merge *.css to all.css and *.js to all.js
-                from Debug import DebugMedia
+                from src.Debug import DebugMedia
                 DebugMedia.merge(file_path)
 
             if file_path.endswith("js"):
-                data = _.translateData(open(file_path).read(), mode="js").encode("utf8")
+                data = _.translateData(
+                    open(file_path).read(), mode="js").encode("utf8")
             elif file_path.endswith("html"):
-                data = _.translateData(open(file_path).read(), mode="html").encode("utf8")
+                data = _.translateData(
+                    open(file_path).read(), mode="html").encode("utf8")
             else:
                 data = open(file_path, "rb").read()
 

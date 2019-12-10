@@ -1,11 +1,11 @@
 import time
 
-from util import helper
+from src.util import helper
 
-from Plugin import PluginManager
-from .BootstrapperDb import BootstrapperDb
-from Crypt import CryptRsa
-from Config import config
+from src.Plugin import PluginManager
+from ..BootstrapperDb import BootstrapperDb
+from src.Crypt import CryptRsa
+from src.Config import config
 
 if "db" not in locals().keys():  # Share during reloads
     db = BootstrapperDb()

@@ -12,17 +12,17 @@ import json
 import gevent
 import gevent.lock
 
-from Plugin import PluginManager
-from Debug import Debug
-from Crypt import CryptHash
+from src.Plugin import PluginManager
+from src.Debug import Debug
+from src.Crypt import CryptHash
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore")  # Ignore missing sha3 warning
     import merkletools
 
-from util import helper
-from util import Msgpack
-from util.Flag import flag
-import util
+from src.util import helper
+from src.util import Msgpack
+from src.util.Flag import flag
+from . import util
 from .BigfilePiecefield import BigfilePiecefield, BigfilePiecefieldPacked
 
 
@@ -30,8 +30,8 @@ from .BigfilePiecefield import BigfilePiecefield, BigfilePiecefieldPacked
 @PluginManager.afterLoad
 def importPluginnedClasses():
     global VerifyError, config
-    from Content.ContentManager import VerifyError
-    from Config import config
+    from src.Content.ContentManager import VerifyError
+    from src.Config import config
 
 if "upload_nonces" not in locals():
     upload_nonces = {}

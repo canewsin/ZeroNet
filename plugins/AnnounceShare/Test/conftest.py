@@ -1,3 +1,3 @@
 from src.Test.conftest import *
 
-from Config import config
+from src.Config import config

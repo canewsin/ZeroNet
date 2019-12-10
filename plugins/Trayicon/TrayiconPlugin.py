@@ -2,9 +2,9 @@ import os
 import sys
 import atexit
 
-from Plugin import PluginManager
-from Config import config
-from Translate import Translate
+from src.Plugin import PluginManager
+from src.Config import config
+from src.Translate import Translate
 
 allow_reload = False  # No source reload supported in this plugin
 
@@ -20,14 +20,15 @@ class ActionsPlugin(object):
 
     def main(self):
         global notificationicon, winfolders
-        from .lib import notificationicon, winfolders
+        from src.lib import notificationicon, winfolders
         import gevent.threadpool
-        import main
+        from . import main
 
         self.main = main
 
         icon = notificationicon.NotificationIcon(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), 'trayicon.ico'),
+            os.path.join(os.path.dirname(
+                os.path.abspath(__file__)), 'trayicon.ico'),
             "ZeroNet %s" % config.version
         )
         self.icon = icon
@@ -50,12 +51,17 @@ class ActionsPlugin(object):
             (self.titleConsole, self.toggleConsole),
             (self.titleAutorun, self.toggleAutorun),
             "--",
-            (_["ZeroNet Twitter"], lambda: self.opensite("https://twitter.com/HelloZeroNet")),
-            (_["ZeroNet Reddit"], lambda: self.opensite("http://www.reddit.com/r/zeronet/")),
-            (_["ZeroNet Github"], lambda: self.opensite("https://github.com/HelloZeroNet/ZeroNet")),
-            (_["Report bug/request feature"], lambda: self.opensite("https://github.com/HelloZeroNet/ZeroNet/issues")),
+            (_["ZeroNet Twitter"], lambda: self.opensite(
+                "https://twitter.com/HelloZeroNet")),
+            (_["ZeroNet Reddit"], lambda: self.opensite(
+                "http://www.reddit.com/r/zeronet/")),
+            (_["ZeroNet Github"], lambda: self.opensite(
+                "https://github.com/HelloZeroNet/ZeroNet")),
+            (_["Report bug/request feature"],
+             lambda: self.opensite("https://github.com/HelloZeroNet/ZeroNet/issues")),
             "--",
-            (_["!Open ZeroNet"], lambda: self.opensite("http://%s:%s/%s" % (ui_ip, config.ui_port, config.homepage))),
+            (_["!Open ZeroNet"], lambda: self.opensite("http://%s:%s/%s" %
+                                                       (ui_ip, config.ui_port, config.homepage))),
             "--",
             (_["Quit"], self.quit),
         ]
@@ -63,11 +69,14 @@ class ActionsPlugin(object):
         if not notificationicon.hasConsole():
             del icon.items[3]
 
-        icon.clicked = lambda: self.opensite("http://%s:%s/%s" % (ui_ip, config.ui_port, config.homepage))
+        icon.clicked = lambda: self.opensite(
+            "http://%s:%s/%s" % (ui_ip, config.ui_port, config.homepage))
         self.quit_servers_event = gevent.threadpool.ThreadResult(
-            lambda res: gevent.spawn_later(0.1, self.quitServers), gevent.threadpool.get_hub(), lambda: True
+            lambda res: gevent.spawn_later(
+                0.1, self.quitServers), gevent.threadpool.get_hub(), lambda: True
         )  # Fix gevent thread switch error
-        gevent.threadpool.start_new_thread(icon._run, ())  # Start in real thread (not gevent compatible)
+        # Start in real thread (not gevent compatible)
+        gevent.threadpool.start_new_thread(icon._run, ())
         super(ActionsPlugin, self).main()
         icon._die = True
 
@@ -134,7 +143,8 @@ class ActionsPlugin(object):
         cmd = " ".join(args)
 
         # Dont open browser on autorun
-        cmd = cmd.replace("start.py", "zeronet.py").replace('"--open_browser"', "").replace('"default_browser"', "").strip()
+        cmd = cmd.replace("start.py", "zeronet.py").replace(
+            '"--open_browser"', "").replace('"default_browser"', "").strip()
         cmd += ' --open_browser ""'
 
         return """

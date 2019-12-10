@@ -1,5 +1,5 @@
 import re
-from Plugin import PluginManager
+from src.Plugin import PluginManager
 
 # Warning: If you modify the donation address then renmae the plugin's directory to "MyDonationMessage" to prevent the update script overwrite
 
@@ -8,7 +8,8 @@ from Plugin import PluginManager
 class UiRequestPlugin(object):
     # Inject a donation message to every page top right corner
     def renderWrapper(self, *args, **kwargs):
-        body = super(UiRequestPlugin, self).renderWrapper(*args, **kwargs)  # Get the wrapper frame output
+        body = super(UiRequestPlugin, self).renderWrapper(
+            *args, **kwargs)  # Get the wrapper frame output
 
         inject_html = """
             <style>

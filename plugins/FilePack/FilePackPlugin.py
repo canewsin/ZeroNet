@@ -3,9 +3,9 @@ import re
 
 import gevent
 
-from Plugin import PluginManager
-from Config import config
-from Debug import Debug
+from src.Plugin import PluginManager
+from src.Config import config
+from src.Debug import Debug
 
 # Keep archive open for faster reponse times for large sites
 archive_cache = {}
@@ -20,14 +20,18 @@ def openArchive(archive_path, file_obj=None):
     if archive_path not in archive_cache:
         if archive_path.endswith("tar.gz"):
             import tarfile
-            archive_cache[archive_path] = tarfile.open(archive_path, fileobj=file_obj, mode="r:gz")
+            archive_cache[archive_path] = tarfile.open(
+                archive_path, fileobj=file_obj, mode="r:gz")
         elif archive_path.endswith("tar.bz2"):
             import tarfile
-            archive_cache[archive_path] = tarfile.open(archive_path, fileobj=file_obj, mode="r:bz2")
+            archive_cache[archive_path] = tarfile.open(
+                archive_path, fileobj=file_obj, mode="r:bz2")
         else:
             import zipfile
-            archive_cache[archive_path] = zipfile.ZipFile(file_obj or archive_path)
-        gevent.spawn_later(5, lambda: closeArchive(archive_path))  # Close after 5 sec
+            archive_cache[archive_path] = zipfile.ZipFile(
+                file_obj or archive_path)
+        gevent.spawn_later(5, lambda: closeArchive(
+            archive_path))  # Close after 5 sec
 
     archive = archive_cache[archive_path]
     return archive
@@ -47,7 +51,8 @@ class UiRequestPlugin(object):
         if ".zip/" in path or ".tar.gz/" in path:
             file_obj = None
             path_parts = self.parsePath(path)
-            file_path = "%s/%s/%s" % (config.data_dir, path_parts["address"], path_parts["inner_path"])
+            file_path = "%s/%s/%s" % (config.data_dir,
+                                      path_parts["address"], path_parts["inner_path"])
             match = re.match("^(.*\.(?:tar.gz|tar.bz2|zip))/(.*)", file_path)
             archive_path, path_within = match.groups()
             if archive_path not in archive_cache:
@@ -68,19 +73,23 @@ class UiRequestPlugin(object):
 
             header_allow_ajax = False
             if self.get.get("ajax_key"):
-                requester_site = self.server.site_manager.get(path_parts["request_address"])
+                requester_site = self.server.site_manager.get(
+                    path_parts["request_address"])
                 if self.get["ajax_key"] == requester_site.settings["ajax_key"]:
                     header_allow_ajax = True
                 else:
                     return self.error403("Invalid ajax_key")
 
             try:
-                file = openArchiveFile(archive_path, path_within, file_obj=file_obj)
+                file = openArchiveFile(
+                    archive_path, path_within, file_obj=file_obj)
                 content_type = self.getContentType(file_path)
-                self.sendHeader(200, content_type=content_type, noscript=kwargs.get("header_noscript", False), allow_ajax=header_allow_ajax)
+                self.sendHeader(200, content_type=content_type, noscript=kwargs.get(
+                    "header_noscript", False), allow_ajax=header_allow_ajax)
                 return self.streamFile(file)
             except Exception as err:
-                self.log.debug("Error opening archive file: %s" % Debug.formatException(err))
+                self.log.debug("Error opening archive file: %s" %
+                               Debug.formatException(err))
                 return self.error404(path)
 
         return super(UiRequestPlugin, self).actionSiteMedia(path, **kwargs)
@@ -124,7 +133,8 @@ class SiteStoragePlugin(object):
         try:
             archive = openArchive(archive_path, file_obj=file_obj)
         except Exception as err:
-            raise Exception("Unable to download file: %s" % Debug.formatException(err))
+            raise Exception("Unable to download file: %s" %
+                            Debug.formatException(err))
 
         return archive
 
@@ -136,9 +146,11 @@ class SiteStoragePlugin(object):
             path_within = path_within.lstrip("/")
 
             if archive_inner_path.endswith(".zip"):
-                namelist = [name for name in archive.namelist() if not name.endswith("/")]
+                namelist = [name for name in archive.namelist()
+                            if not name.endswith("/")]
             else:
-                namelist = [item.name for item in archive.getmembers() if not item.isdir()]
+                namelist = [item.name for item in archive.getmembers()
+                            if not item.isdir()]
 
             namelist_relative = []
             for name in namelist:
@@ -193,4 +205,3 @@ class SiteStoragePlugin(object):
 
         else:
             return super(SiteStoragePlugin, self).read(inner_path, mode, **kwargs)
-

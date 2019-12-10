@@ -1,18 +1,20 @@
 import time
 import re
 
-from Plugin import PluginManager
-from Db.DbQuery import DbQuery
-from Debug import Debug
-from util import helper
-from util.Flag import flag
+from src.Plugin import PluginManager
+from src.Db.DbQuery import DbQuery
+from src.Debug import Debug
+from src.util import helper
+from src.util.Flag import flag
 
 
 @PluginManager.registerTo("UiWebsocket")
 class UiWebsocketPlugin(object):
     def formatSiteInfo(self, site, create_user=True):
-        site_info = super(UiWebsocketPlugin, self).formatSiteInfo(site, create_user=create_user)
-        feed_following = self.user.sites.get(site.address, {}).get("follow", None)
+        site_info = super(UiWebsocketPlugin, self).formatSiteInfo(
+            site, create_user=create_user)
+        feed_following = self.user.sites.get(
+            site.address, {}).get("follow", None)
         if feed_following == None:
             site_info["feed_follow_num"] = None
         else:
@@ -30,7 +32,7 @@ class UiWebsocketPlugin(object):
 
     @flag.admin
     def actionFeedQuery(self, to, limit=10, day_limit=3):
-        from Site import SiteManager
+        from src.Site import SiteManager
         rows = []
         stats = []
 
@@ -57,9 +59,11 @@ class UiWebsocketPlugin(object):
                     for i, query_part in enumerate(query_parts):
                         db_query = DbQuery(query_part)
                         if day_limit:
-                            where = " WHERE %s > strftime('%%s', 'now', '-%s day')" % (db_query.fields.get("date_added", "date_added"), day_limit)
+                            where = " WHERE %s > strftime('%%s', 'now', '-%s day')" % (
+                                db_query.fields.get("date_added", "date_added"), day_limit)
                             if "WHERE" in query_part:
-                                query_part = re.sub("WHERE (.*?)(?=$| GROUP BY)", where+" AND (\\1)", query_part)
+                                query_part = re.sub(
+                                    "WHERE (.*?)(?=$| GROUP BY)", where+" AND (\\1)", query_part)
                             else:
                                 query_part += where
                         query_parts[i] = query_part
@@ -67,29 +71,36 @@ class UiWebsocketPlugin(object):
 
                     if ":params" in query:
                         query_params = map(helper.sqlquote, params)
-                        query = query.replace(":params", ",".join(query_params))
+                        query = query.replace(
+                            ":params", ",".join(query_params))
 
-                    res = site.storage.query(query + " ORDER BY date_added DESC LIMIT %s" % limit)
+                    res = site.storage.query(
+                        query + " ORDER BY date_added DESC LIMIT %s" % limit)
 
                 except Exception as err:  # Log error
-                    self.log.error("%s feed query %s error: %s" % (address, name, Debug.formatException(err)))
-                    stats.append({"site": site.address, "feed_name": name, "error": str(err)})
+                    self.log.error("%s feed query %s error: %s" %
+                                   (address, name, Debug.formatException(err)))
+                    stats.append(
+                        {"site": site.address, "feed_name": name, "error": str(err)})
                     continue
 
                 for row in res:
                     row = dict(row)
                     if not isinstance(row["date_added"], (int, float, complex)):
-                        self.log.debug("Invalid date_added from site %s: %r" % (address, row["date_added"]))
+                        self.log.debug("Invalid date_added from site %s: %r" % (
+                            address, row["date_added"]))
                         continue
                     if row["date_added"] > 1000000000000:  # Formatted as millseconds
                         row["date_added"] = row["date_added"] / 1000
                     if "date_added" not in row or row["date_added"] > time.time() + 120:
-                        self.log.debug("Newsfeed item from the future from from site %s" % address)
+                        self.log.debug(
+                            "Newsfeed item from the future from from site %s" % address)
                         continue  # Feed item is in the future, skip it
                     row["site"] = address
                     row["feed_name"] = name
                     rows.append(row)
-                stats.append({"site": site.address, "feed_name": name, "taken": round(time.time() - s, 3)})
+                stats.append({"site": site.address, "feed_name": name,
+                              "taken": round(time.time() - s, 3)})
                 time.sleep(0.001)
         return self.response(to, {"rows": rows, "stats": stats, "num": len(rows), "sites": num_sites, "taken": round(time.time() - total_s, 3)})
 
@@ -108,7 +119,7 @@ class UiWebsocketPlugin(object):
         if "ADMIN" not in self.site.settings["permissions"]:
             return self.response(to, "FeedSearch not allowed")
 
-        from Site import SiteManager
+        from src.Site import SiteManager
         rows = []
         stats = []
         num_sites = 0
@@ -145,7 +156,8 @@ class UiWebsocketPlugin(object):
                     params = []
                     # Filters
                     if search_text:
-                        db_query.wheres.append("(%s LIKE ? OR %s LIKE ?)" % (db_query.fields["body"], db_query.fields["title"]))
+                        db_query.wheres.append("(%s LIKE ? OR %s LIKE ?)" % (
+                            db_query.fields["body"], db_query.fields["title"]))
                         search_like = "%" + search_text.replace(" ", "%") + "%"
                         params.append(search_like)
                         params.append(search_like)
@@ -154,7 +166,8 @@ class UiWebsocketPlugin(object):
 
                     if day_limit:
                         db_query.wheres.append(
-                            "%s > strftime('%%s', 'now', '-%s day')" % (db_query.fields.get("date_added", "date_added"), day_limit)
+                            "%s > strftime('%%s', 'now', '-%s day')" % (
+                                db_query.fields.get("date_added", "date_added"), day_limit)
                         )
 
                     # Order
@@ -163,8 +176,10 @@ class UiWebsocketPlugin(object):
 
                     res = site.storage.query(str(db_query), params)
                 except Exception as err:
-                    self.log.error("%s feed query %s error: %s" % (address, name, Debug.formatException(err)))
-                    stats.append({"site": site.address, "feed_name": name, "error": str(err), "query": query})
+                    self.log.error("%s feed query %s error: %s" %
+                                   (address, name, Debug.formatException(err)))
+                    stats.append(
+                        {"site": site.address, "feed_name": name, "error": str(err), "query": query})
                     continue
                 for row in res:
                     row = dict(row)
@@ -173,7 +188,8 @@ class UiWebsocketPlugin(object):
                     row["site"] = address
                     row["feed_name"] = name
                     rows.append(row)
-                stats.append({"site": site.address, "feed_name": name, "taken": round(time.time() - s, 3)})
+                stats.append({"site": site.address, "feed_name": name,
+                              "taken": round(time.time() - s, 3)})
         return self.response(to, {"rows": rows, "num": len(rows), "sites": num_sites, "taken": round(time.time() - total_s, 3), "stats": stats})
 
 

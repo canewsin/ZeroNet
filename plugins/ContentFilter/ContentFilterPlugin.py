@@ -4,10 +4,10 @@ import html
 import hashlib
 import os
 
-from Plugin import PluginManager
-from Translate import Translate
-from Config import config
-from util.Flag import flag
+from src.Plugin import PluginManager
+from src.Translate import Translate
+from src.Config import config
+from src.util.Flag import flag
 
 from .ContentFilterStorage import ContentFilterStorage
 

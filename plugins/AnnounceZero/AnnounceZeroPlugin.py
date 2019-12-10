@@ -1,9 +1,9 @@
 import time
 import itertools
 
-from Plugin import PluginManager
-from util import helper
-from Crypt import CryptRsa
+from src.Plugin import PluginManager
+from src.util import helper
+from src.Crypt import CryptRsa
 
 allow_reload = False  # No source reload supported in this plugin
 time_full_announced = {}  # Tracker address: Last announced all site to tracker
@@ -14,8 +14,8 @@ connection_pool = {}  # Tracker address: Peer object
 @PluginManager.afterLoad
 def importHostClasses():
     global Peer, AnnounceError
-    from Peer import Peer
-    from Site.SiteAnnouncer import AnnounceError
+    from src.Peer import Peer
+    from src.Site.SiteAnnouncer import AnnounceError
 
 
 # Process result got back from tracker
@@ -32,7 +32,8 @@ def processPeerRes(tracker_address, site, peers):
 
     # Ip4
     found_ipv4 = 0
-    peers_normal = itertools.chain(peers.get("ip4", []), peers.get("ipv4", []), peers.get("ipv6", []))
+    peers_normal = itertools.chain(
+        peers.get("ip4", []), peers.get("ipv4", []), peers.get("ipv6", []))
     for packed_address in peers_normal:
         found_ipv4 += 1
         peer_ip, peer_port = helper.unpackAddress(packed_address)
@@ -67,11 +68,13 @@ class SiteAnnouncerPlugin(object):
             full_announce = False
         else:  # Multi: Announce all currently serving site
             full_announce = True
-            if time.time() - time_full_announced.get(tracker_address, 0) < 60 * 15:  # No reannounce all sites within short time
+            # No reannounce all sites within short time
+            if time.time() - time_full_announced.get(tracker_address, 0) < 60 * 15:
                 return None
             time_full_announced[tracker_address] = time.time()
-            from Site import SiteManager
-            sites = [site for site in SiteManager.site_manager.sites.values() if site.isServing()]
+            from src.Site import SiteManager
+            sites = [site for site in SiteManager.site_manager.sites.values()
+                     if site.isServing()]
 
         # Create request
         add_types = self.getOpenedServiceTypes()
@@ -80,7 +83,8 @@ class SiteAnnouncerPlugin(object):
         }
         for site in sites:
             if "onion" in add_types:
-                onion = self.site.connection_server.tor_manager.getOnion(site.address)
+                onion = self.site.connection_server.tor_manager.getOnion(
+                    site.address)
                 request["onions"].append(onion)
             request["hashes"].append(site.address_hash)
 
@@ -89,10 +93,12 @@ class SiteAnnouncerPlugin(object):
             request["delete"] = True
 
         # Sent request to tracker
-        tracker_peer = connection_pool.get(tracker_address)  # Re-use tracker connection if possible
+        # Re-use tracker connection if possible
+        tracker_peer = connection_pool.get(tracker_address)
         if not tracker_peer:
             tracker_ip, tracker_port = tracker_address.rsplit(":", 1)
-            tracker_peer = Peer(str(tracker_ip), int(tracker_port), connection_server=self.site.connection_server)
+            tracker_peer = Peer(str(tracker_ip), int(
+                tracker_port), connection_server=self.site.connection_server)
             tracker_peer.is_tracker_connection = True
             connection_pool[tracker_address] = tracker_peer
 
@@ -113,21 +119,26 @@ class SiteAnnouncerPlugin(object):
 
         # Check if we need to sign prove the onion addresses
         if "onion_sign_this" in res:
-            self.site.log.debug("Signing %s for %s to add %s onions" % (res["onion_sign_this"], tracker_address, len(sites)))
+            self.site.log.debug("Signing %s for %s to add %s onions" % (
+                res["onion_sign_this"], tracker_address, len(sites)))
             request["onion_signs"] = {}
             request["onion_sign_this"] = res["onion_sign_this"]
             request["need_num"] = 0
             for site in sites:
-                onion = self.site.connection_server.tor_manager.getOnion(site.address)
-                publickey = self.site.connection_server.tor_manager.getPublickey(onion)
+                onion = self.site.connection_server.tor_manager.getOnion(
+                    site.address)
+                publickey = self.site.connection_server.tor_manager.getPublickey(
+                    onion)
                 if publickey not in request["onion_signs"]:
-                    sign = CryptRsa.sign(res["onion_sign_this"].encode("utf8"), self.site.connection_server.tor_manager.getPrivatekey(onion))
+                    sign = CryptRsa.sign(res["onion_sign_this"].encode(
+                        "utf8"), self.site.connection_server.tor_manager.getPrivatekey(onion))
                     request["onion_signs"][publickey] = sign
             res = tracker_peer.request("announce", request)
             if not res or "onion_sign_this" in res:
                 if full_announce:
                     time_full_announced[tracker_address] = 0
-                raise AnnounceError("Announce onion address to failed: %s" % res)
+                raise AnnounceError(
+                    "Announce onion address to failed: %s" % res)
 
         if full_announce:
             tracker_peer.remove()  # Close connection, we don't need it in next 5 minute

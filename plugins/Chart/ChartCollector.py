@@ -5,8 +5,8 @@ import itertools
 import logging
 
 import gevent
-from util import helper
-from Config import config
+from src.util import helper
+from src.Config import config
 
 
 class ChartCollector(object):
@@ -25,7 +25,7 @@ class ChartCollector(object):
 
     def getCollectors(self):
         collectors = {}
-        import main
+        from . import main
         file_server = main.file_server
         sites = file_server.sites
         if not sites:
@@ -101,7 +101,7 @@ class ChartCollector(object):
         return site_collectors
 
     def getUniquePeers(self):
-        import main
+        from . import main
         sites = main.file_server.sites
         return set(itertools.chain.from_iterable(
             [site.peers.keys() for site in sites.values()]
@@ -170,7 +170,7 @@ class ChartCollector(object):
     def collector(self):
         collectors = self.getCollectors()
         site_collectors = self.getSiteCollectors()
-        import main
+        from . import main
         sites = main.file_server.sites
         i = 0
         while 1:

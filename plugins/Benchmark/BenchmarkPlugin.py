@@ -5,11 +5,11 @@ import math
 import hashlib
 import re
 
-from Config import config
-from Crypt import CryptHash
-from Plugin import PluginManager
-from Debug import Debug
-from util import helper
+from src.Config import config
+from src.Crypt import CryptHash
+from src.Plugin import PluginManager
+from src.Debug import Debug
+from src.util import helper
 
 plugin_dir = os.path.dirname(__file__)
 
@@ -52,7 +52,7 @@ class UiRequestPlugin(object):
 
         yield " " * 1024  # Head (required for streaming)
 
-        import main
+        from . import main
         s = time.time()
 
         for part in main.actions.testBenchmark(filter=self.get.get("filter", "")):
@@ -230,7 +230,7 @@ class ActionsPlugin:
         """
         yield "(5MB) "
 
-        from Crypt import CryptHash
+        from src.Crypt import CryptHash
 
         hash_types = {
             "sha256": {"func": CryptHash.sha256sum, "hash_valid": "8cd629d9d6aff6590da8b80782a5046d2673d5917b99d5603c3dcb4005c45ffa"},
@@ -291,7 +291,7 @@ class ActionsPlugin:
         """
         Test generating deterministic private keys from a master seed
         """
-        from Crypt import CryptBitcoin
+        from src.Crypt import CryptBitcoin
         seed = "e180efa477c63b0f2757eac7b1cce781877177fe0966be62754ffd4c8592ce38"
         privatekeys = []
         for i in range(num_run):
@@ -306,7 +306,7 @@ class ActionsPlugin:
         """
         Test signing data using a private key
         """
-        from Crypt import CryptBitcoin
+        from src.Crypt import CryptBitcoin
         data = "Hello" * 1024
         privatekey = "5JsunC55XGVqFQj5kPGK4MWgTL26jKbnPhjnmchSNPo75XXCwtk"
         for i in range(num_run):
@@ -319,7 +319,7 @@ class ActionsPlugin:
         """
         Test verification of generated signatures
         """
-        from Crypt import CryptBitcoin
+        from src.Crypt import CryptBitcoin
         CryptBitcoin.loadLib(lib_verify, silent=True)
 
         data = "Hello" * 1024

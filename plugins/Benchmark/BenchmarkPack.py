@@ -2,9 +2,9 @@ import os
 import io
 from collections import OrderedDict
 
-from Plugin import PluginManager
-from Config import config
-from util import Msgpack
+from src.Plugin import PluginManager
+from src.Config import config
+from src.util import Msgpack
 
 
 @PluginManager.registerTo("Actions")
@@ -27,7 +27,7 @@ class ActionsPlugin:
         Test zip file creating
         """
         yield "x 100 x 5KB "
-        from Crypt import CryptHash
+        from src.Crypt import CryptHash
         zip_path = '%s/test.zip' % config.data_dir
         for i in range(num_run):
             self.createZipFile(zip_path)
@@ -88,7 +88,7 @@ class ActionsPlugin:
         Test creating tar archive files
         """
         yield "x 100 x 5KB "
-        from Crypt import CryptHash
+        from src.Crypt import CryptHash
 
         hash_valid_db = {
             "gz": "92caec5121a31709cbbc8c11b0939758e670b055bbbe84f9beb3e781dfde710f",

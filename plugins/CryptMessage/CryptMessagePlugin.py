@@ -3,10 +3,10 @@ import os
 
 import gevent
 
-from Plugin import PluginManager
-from Crypt import CryptBitcoin, CryptHash
-import lib.pybitcointools as btctools
-from Config import config
+from src.Plugin import PluginManager
+from src.Crypt import CryptBitcoin, CryptHash
+import src.lib.pybitcointools as btctools
+from src.Config import config
 from . import CryptMessage
 
 
@@ -28,10 +28,13 @@ class UiWebsocketPlugin(object):
     # Return: Encrypted text using base64 encoding
     def actionEciesEncrypt(self, to, text, publickey=0, return_aes_key=False):
         if type(publickey) is int:  # Encrypt using user's publickey
-            publickey = self.user.getEncryptPublickey(self.site.address, publickey)
-        aes_key, encrypted = CryptMessage.eciesEncrypt(text.encode("utf8"), publickey)
+            publickey = self.user.getEncryptPublickey(
+                self.site.address, publickey)
+        aes_key, encrypted = CryptMessage.eciesEncrypt(
+            text.encode("utf8"), publickey)
         if return_aes_key:
-            self.response(to, [base64.b64encode(encrypted).decode("utf8"), base64.b64encode(aes_key).decode("utf8")])
+            self.response(to, [base64.b64encode(encrypted).decode(
+                "utf8"), base64.b64encode(aes_key).decode("utf8")])
         else:
             self.response(to, base64.b64encode(encrypted).decode("utf8"))
 
@@ -39,7 +42,8 @@ class UiWebsocketPlugin(object):
     # Return: Decrypted text or list of decrypted texts
     def actionEciesDecrypt(self, to, param, privatekey=0):
         if type(privatekey) is int:  # Decrypt using user's privatekey
-            privatekey = self.user.getEncryptPrivatekey(self.site.address, privatekey)
+            privatekey = self.user.getEncryptPrivatekey(
+                self.site.address, privatekey)
 
         if type(param) == list:
             encrypted_texts = param
@@ -56,7 +60,7 @@ class UiWebsocketPlugin(object):
     # Encrypt a text using AES
     # Return: Iv, AES key, Encrypted text
     def actionAesEncrypt(self, to, text, key=None, iv=None):
-        from lib import pyelliptic
+        from src.lib import pyelliptic
 
         if key:
             key = base64.b64decode(key)
@@ -69,17 +73,19 @@ class UiWebsocketPlugin(object):
             iv = pyelliptic.Cipher.gen_IV('aes-256-cbc')
 
         if text:
-            encrypted = pyelliptic.Cipher(key, iv, 1, ciphername='aes-256-cbc').ciphering(text.encode("utf8"))
+            encrypted = pyelliptic.Cipher(
+                key, iv, 1, ciphername='aes-256-cbc').ciphering(text.encode("utf8"))
         else:
             encrypted = b""
 
-        res = [base64.b64encode(item).decode("utf8") for item in [key, iv, encrypted]]
+        res = [base64.b64encode(item).decode("utf8")
+               for item in [key, iv, encrypted]]
         self.response(to, res)
 
     # Decrypt a text using AES
     # Return: Decrypted text
     def actionAesDecrypt(self, to, *args):
-        from lib import pyelliptic
+        from src.lib import pyelliptic
 
         if len(args) == 3:  # Single decrypt
             encrypted_texts = [(args[0], args[1])]
@@ -93,10 +99,12 @@ class UiWebsocketPlugin(object):
             iv = base64.b64decode(iv)
             text = None
             for key in keys:
-                ctx = pyelliptic.Cipher(base64.b64decode(key), iv, 0, ciphername='aes-256-cbc')
+                ctx = pyelliptic.Cipher(base64.b64decode(
+                    key), iv, 0, ciphername='aes-256-cbc')
                 try:
                     decrypted = ctx.ciphering(encrypted_text)
-                    if decrypted and decrypted.decode("utf8"):  # Valid text decoded
+                    # Valid text decoded
+                    if decrypted and decrypted.decode("utf8"):
                         text = decrypted.decode("utf8")
                 except Exception as err:
                     pass
@@ -146,8 +154,10 @@ class UserPlugin(object):
         if "encrypt_privatekey_%s" % index not in site_data:
             address_index = self.getAddressAuthIndex(address)
             crypt_index = address_index + 1000 + index
-            site_data["encrypt_privatekey_%s" % index] = CryptBitcoin.hdPrivatekey(self.master_seed, crypt_index)
-            self.log.debug("New encrypt privatekey generated for %s:%s" % (address, index))
+            site_data["encrypt_privatekey_%s" % index] = CryptBitcoin.hdPrivatekey(
+                self.master_seed, crypt_index)
+            self.log.debug(
+                "New encrypt privatekey generated for %s:%s" % (address, index))
         return site_data["encrypt_privatekey_%s" % index]
 
     def getEncryptPublickey(self, address, param_index=0):
@@ -163,8 +173,10 @@ class UserPlugin(object):
 
         if "encrypt_publickey_%s" % index not in site_data:
             privatekey = self.getEncryptPrivatekey(address, param_index)
-            publickey = btctools.encode_pubkey(btctools.privtopub(privatekey), "bin_compressed")
-            site_data["encrypt_publickey_%s" % index] = base64.b64encode(publickey).decode("utf8")
+            publickey = btctools.encode_pubkey(
+                btctools.privtopub(privatekey), "bin_compressed")
+            site_data["encrypt_publickey_%s" %
+                      index] = base64.b64encode(publickey).decode("utf8")
         return site_data["encrypt_publickey_%s" % index]
 
 
@@ -180,63 +192,77 @@ class ActionsPlugin:
         else:
             tests = []
 
-        aes_key, encrypted = CryptMessage.eciesEncrypt(self.utf8_text.encode("utf8"), self.publickey)  # Warm-up
+        aes_key, encrypted = CryptMessage.eciesEncrypt(
+            self.utf8_text.encode("utf8"), self.publickey)  # Warm-up
         tests.extend([
-            {"func": self.testCryptEciesEncrypt, "kwargs": {}, "num": 100, "time_standard": 1.2},
-            {"func": self.testCryptEciesDecrypt, "kwargs": {}, "num": 500, "time_standard": 1.3},
-            {"func": self.testCryptEciesDecryptMulti, "kwargs": {}, "num": 5, "time_standard": 0.68},
-            {"func": self.testCryptAesEncrypt, "kwargs": {}, "num": 10000, "time_standard": 0.27},
-            {"func": self.testCryptAesDecrypt, "kwargs": {}, "num": 10000, "time_standard": 0.25}
+            {"func": self.testCryptEciesEncrypt, "kwargs": {},
+                "num": 100, "time_standard": 1.2},
+            {"func": self.testCryptEciesDecrypt, "kwargs": {},
+                "num": 500, "time_standard": 1.3},
+            {"func": self.testCryptEciesDecryptMulti,
+                "kwargs": {}, "num": 5, "time_standard": 0.68},
+            {"func": self.testCryptAesEncrypt, "kwargs": {},
+                "num": 10000, "time_standard": 0.27},
+            {"func": self.testCryptAesDecrypt, "kwargs": {},
+                "num": 10000, "time_standard": 0.25}
         ])
         return tests
 
     def testCryptEciesEncrypt(self, num_run=1):
         for i in range(num_run):
-            aes_key, encrypted = CryptMessage.eciesEncrypt(self.utf8_text.encode("utf8"), self.publickey)
+            aes_key, encrypted = CryptMessage.eciesEncrypt(
+                self.utf8_text.encode("utf8"), self.publickey)
             assert len(aes_key) == 32
             yield "."
 
     def testCryptEciesDecrypt(self, num_run=1):
-        aes_key, encrypted = CryptMessage.eciesEncrypt(self.utf8_text.encode("utf8"), self.publickey)
+        aes_key, encrypted = CryptMessage.eciesEncrypt(
+            self.utf8_text.encode("utf8"), self.publickey)
         for i in range(num_run):
             assert len(aes_key) == 32
             ecc = CryptMessage.getEcc(self.privatekey)
-            assert ecc.decrypt(encrypted) == self.utf8_text.encode("utf8"), "%s != %s" % (ecc.decrypt(encrypted), self.utf8_text.encode("utf8"))
+            assert ecc.decrypt(encrypted) == self.utf8_text.encode("utf8"), "%s != %s" % (
+                ecc.decrypt(encrypted), self.utf8_text.encode("utf8"))
             yield "."
 
     def testCryptEciesDecryptMulti(self, num_run=1):
         yield "x 100 (%s threads) " % config.threads_crypt
-        aes_key, encrypted = CryptMessage.eciesEncrypt(self.utf8_text.encode("utf8"), self.publickey)
+        aes_key, encrypted = CryptMessage.eciesEncrypt(
+            self.utf8_text.encode("utf8"), self.publickey)
 
         threads = []
         for i in range(num_run):
             assert len(aes_key) == 32
             threads.append(gevent.spawn(
-                CryptMessage.eciesDecryptMulti, [base64.b64encode(encrypted)] * 100, self.privatekey
+                CryptMessage.eciesDecryptMulti, [
+                    base64.b64encode(encrypted)] * 100, self.privatekey
             ))
 
         for thread in threads:
             res = thread.get()
-            assert res[0] == self.utf8_text, "%s != %s" % (res[0], self.utf8_text)
+            assert res[0] == self.utf8_text, "%s != %s" % (
+                res[0], self.utf8_text)
             assert res[0] == res[-1], "%s != %s" % (res[0], res[-1])
             yield "."
         gevent.joinall(threads)
 
     def testCryptAesEncrypt(self, num_run=1):
-        from lib import pyelliptic
+        from src.lib import pyelliptic
 
         for i in range(num_run):
             key = os.urandom(32)
             iv = pyelliptic.Cipher.gen_IV('aes-256-cbc')
-            encrypted = pyelliptic.Cipher(key, iv, 1, ciphername='aes-256-cbc').ciphering(self.utf8_text.encode("utf8"))
+            encrypted = pyelliptic.Cipher(
+                key, iv, 1, ciphername='aes-256-cbc').ciphering(self.utf8_text.encode("utf8"))
             yield "."
 
     def testCryptAesDecrypt(self, num_run=1):
-        from lib import pyelliptic
+        from src.lib import pyelliptic
 
         key = os.urandom(32)
         iv = pyelliptic.Cipher.gen_IV('aes-256-cbc')
-        encrypted_text = pyelliptic.Cipher(key, iv, 1, ciphername='aes-256-cbc').ciphering(self.utf8_text.encode("utf8"))
+        encrypted_text = pyelliptic.Cipher(
+            key, iv, 1, ciphername='aes-256-cbc').ciphering(self.utf8_text.encode("utf8"))
 
         for i in range(num_run):
             ctx = pyelliptic.Cipher(key, iv, 0, ciphername='aes-256-cbc')

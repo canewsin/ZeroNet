@@ -4,23 +4,23 @@ import struct
 import socket
 
 import bencode
-from lib.subtl.subtl import UdpTrackerClient
+from src.lib.subtl.subtl import UdpTrackerClient
 import socks
 import sockshandler
 import gevent
 
-from Plugin import PluginManager
-from Config import config
-from Debug import Debug
-from util import helper
+from src.Plugin import PluginManager
+from src.Config import config
+from src.Debug import Debug
+from src.util import helper
 
 
 # We can only import plugin host clases after the plugins are loaded
 @PluginManager.afterLoad
 def importHostClasses():
     global Peer, AnnounceError
-    from Peer import Peer
-    from Site.SiteAnnouncer import AnnounceError
+    from src.Peer import Peer
+    from src.Site.SiteAnnouncer import AnnounceError
 
 
 @PluginManager.registerTo("SiteAnnouncer")
@@ -28,7 +28,8 @@ class SiteAnnouncerPlugin(object):
     def getSupportedTrackers(self):
         trackers = super(SiteAnnouncerPlugin, self).getSupportedTrackers()
         if config.disable_udp or config.trackers_proxy != "disable":
-            trackers = [tracker for tracker in trackers if not tracker.startswith("udp://")]
+            trackers = [
+                tracker for tracker in trackers if not tracker.startswith("udp://")]
 
         return trackers
 
@@ -40,7 +41,8 @@ class SiteAnnouncerPlugin(object):
         elif protocol == "https":
             handler = self.announceTrackerHttps
         else:
-            handler = super(SiteAnnouncerPlugin, self).getTrackerHandler(protocol)
+            handler = super(SiteAnnouncerPlugin,
+                            self).getTrackerHandler(protocol)
         return handler
 
     def announceTrackerUdp(self, tracker_address, mode="start", num_want=10):
@@ -59,7 +61,8 @@ class SiteAnnouncerPlugin(object):
         tracker.connect()
         if not tracker.poll_once():
             raise AnnounceError("Could not connect")
-        tracker.announce(info_hash=self.site.address_sha1, num_want=num_want, left=431102370)
+        tracker.announce(info_hash=self.site.address_sha1,
+                         num_want=num_want, left=431102370)
         back = tracker.poll_once()
         if not back:
             raise AnnounceError("No response after %.0fs" % (time.time() - s))
@@ -84,14 +87,16 @@ class SiteAnnouncerPlugin(object):
 
         if config.trackers_proxy == "tor":
             tor_manager = self.site.connection_server.tor_manager
-            handler = sockshandler.SocksiPyHandler(socks.SOCKS5, tor_manager.proxy_ip, tor_manager.proxy_port)
+            handler = sockshandler.SocksiPyHandler(
+                socks.SOCKS5, tor_manager.proxy_ip, tor_manager.proxy_port)
             opener = urllib.request.build_opener(handler)
             return opener.open(req, timeout=50)
         elif config.trackers_proxy == "disable":
             return urllib.request.urlopen(req, timeout=25)
         else:
             proxy_ip, proxy_port = config.trackers_proxy.split(":")
-            handler = sockshandler.SocksiPyHandler(socks.SOCKS5, proxy_ip, int(proxy_port))
+            handler = sockshandler.SocksiPyHandler(
+                socks.SOCKS5, proxy_ip, int(proxy_port))
             opener = urllib.request.build_opener(handler)
             return opener.open(req, timeout=50)
 
@@ -112,7 +117,8 @@ class SiteAnnouncerPlugin(object):
             'event': 'started'
         }
 
-        url = protocol + "://" + tracker_address + "?" + urllib.parse.urlencode(params)
+        url = protocol + "://" + tracker_address + \
+            "?" + urllib.parse.urlencode(params)
 
         s = time.time()
         response = None
@@ -143,8 +149,10 @@ class SiteAnnouncerPlugin(object):
                 off = 6 * peer_offset
                 peer = peer_data[off:off + 6]
                 addr, port = struct.unpack('!LH', peer)
-                peers.append({"addr": socket.inet_ntoa(struct.pack('!L', addr)), "port": port})
+                peers.append({"addr": socket.inet_ntoa(
+                    struct.pack('!L', addr)), "port": port})
         except Exception as err:
-            raise AnnounceError("Invalid response: %r (%s)" % (response, Debug.formatException(err)))
+            raise AnnounceError("Invalid response: %r (%s)" %
+                                (response, Debug.formatException(err)))
 
         return peers

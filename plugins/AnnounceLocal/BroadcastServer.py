@@ -3,9 +3,9 @@ import logging
 import time
 from contextlib import closing
 
-from Debug import Debug
-from util import UpnpPunch
-from util import Msgpack
+from src.Debug import Debug
+from src.util import UpnpPunch
+from src.util import Msgpack
 
 
 class BroadcastServer(object):

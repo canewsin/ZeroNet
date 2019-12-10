@@ -4,7 +4,7 @@ import random
 import atexit
 
 import gevent
-from Plugin import PluginManager
+from src.Plugin import PluginManager
 
 
 @PluginManager.registerTo("ContentDb")
@@ -18,7 +18,8 @@ class ContentDbPlugin(object):
 
         schema["tables"]["peer"] = {
             "cols": [
-                ["site_id", "INTEGER REFERENCES site (site_id) ON DELETE CASCADE"],
+                ["site_id",
+                    "INTEGER REFERENCES site (site_id) ON DELETE CASCADE"],
                 ["address", "TEXT NOT NULL"],
                 ["port", "INTEGER NOT NULL"],
                 ["hashfield", "BLOB"],
@@ -37,7 +38,8 @@ class ContentDbPlugin(object):
     def loadPeers(self, site):
         s = time.time()
         site_id = self.site_ids.get(site.address)
-        res = self.execute("SELECT * FROM peer WHERE site_id = :site_id", {"site_id": site_id})
+        res = self.execute(
+            "SELECT * FROM peer WHERE site_id = :site_id", {"site_id": site_id})
         num = 0
         num_hashfield = 0
         for row in res:
@@ -51,11 +53,12 @@ class ContentDbPlugin(object):
             peer.time_found = row["time_found"]
             peer.reputation = row["reputation"]
             if row["address"].endswith(".onion"):
-                peer.reputation = peer.reputation / 2 - 1 # Onion peers less likely working
+                peer.reputation = peer.reputation / 2 - 1  # Onion peers less likely working
             num += 1
         if num_hashfield:
             site.content_manager.has_optional_files = True
-        site.log.debug("%s peers (%s with hashfield) loaded in %.3fs" % (num, num_hashfield, time.time() - s))
+        site.log.debug("%s peers (%s with hashfield) loaded in %.3fs" %
+                       (num, num_hashfield, time.time() - s))
 
     def iteratePeers(self, site):
         site_id = self.site_ids.get(site.address)
@@ -70,7 +73,8 @@ class ContentDbPlugin(object):
     def savePeers(self, site, spawn=False):
         if spawn:
             # Save peers every hour (+random some secs to not update very site at same time)
-            site.greenlet_manager.spawnLater(60 * 60 + random.randint(0, 60), self.savePeers, site, spawn=True)
+            site.greenlet_manager.spawnLater(
+                60 * 60 + random.randint(0, 60), self.savePeers, site, spawn=True)
         if not site.peers:
             site.log.debug("Peers not saved: No peers found")
             return
@@ -78,7 +82,8 @@ class ContentDbPlugin(object):
         site_id = self.site_ids.get(site.address)
         cur = self.getCursor()
         try:
-            cur.execute("DELETE FROM peer WHERE site_id = :site_id", {"site_id": site_id})
+            cur.execute("DELETE FROM peer WHERE site_id = :site_id", {
+                        "site_id": site_id})
             cur.executemany(
                 "INSERT INTO peer (site_id, address, port, hashfield, reputation, time_added, time_found) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 self.iteratePeers(site)
@@ -90,7 +95,8 @@ class ContentDbPlugin(object):
     def initSite(self, site):
         super(ContentDbPlugin, self).initSite(site)
         site.greenlet_manager.spawnLater(0.5, self.loadPeers, site)
-        site.greenlet_manager.spawnLater(60*60, self.savePeers, site, spawn=True)
+        site.greenlet_manager.spawnLater(
+            60*60, self.savePeers, site, spawn=True)
 
     def saveAllPeers(self):
         for site in list(self.sites.values()):

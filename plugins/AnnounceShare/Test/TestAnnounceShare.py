@@ -1,8 +1,8 @@
 import pytest
 
-from AnnounceShare import AnnounceSharePlugin
-from Peer import Peer
-from Config import config
+from ...AnnounceShare import AnnounceSharePlugin
+from src.Peer import Peer
+from src.Config import config
 
 
 @pytest.mark.usefixtures("resetSettings")
@@ -19,6 +19,7 @@ class TestAnnounceShare:
         assert peer.request("getTrackers")["trackers"] == []
 
         # It needs to have at least one successfull announce to be shared to other peers
-        tracker_storage.onTrackerSuccess("zero://%s:15441" % file_server.ip, 1.0)
-        assert peer.request("getTrackers")["trackers"] == ["zero://%s:15441" % file_server.ip]
-
+        tracker_storage.onTrackerSuccess(
+            "zero://%s:15441" % file_server.ip, 1.0)
+        assert peer.request("getTrackers")["trackers"] == [
+            "zero://%s:15441" % file_server.ip]

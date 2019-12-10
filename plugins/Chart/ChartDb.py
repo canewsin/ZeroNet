@@ -1,5 +1,5 @@
-from Config import config
-from Db.Db import Db
+from src.Config import config
+from src.Db.Db import Db
 import time
 
 

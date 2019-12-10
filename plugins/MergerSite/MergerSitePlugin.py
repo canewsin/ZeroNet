@@ -3,19 +3,20 @@ import time
 import copy
 import os
 
-from Plugin import PluginManager
-from Translate import Translate
-from util import RateLimit
-from util import helper
-from util.Flag import flag
-from Debug import Debug
+from src.Plugin import PluginManager
+from src.Translate import Translate
+from src.util import RateLimit
+from src.util import helper
+from src.util.Flag import flag
+from src.Debug import Debug
 try:
-    import OptionalManager.UiWebsocketPlugin  # To make optioanlFileInfo merger sites compatible
+    from . import OptionalManager  # To make optioanlFileInfo merger sites compatible
 except Exception:
     pass
 
 if "merger_db" not in locals().keys():  # To keep merger_sites between module reloads
-    merger_db = {}  # Sites that allowed to list other sites {address: [type1, type2...]}
+    # Sites that allowed to list other sites {address: [type1, type2...]}
+    merger_db = {}
     merged_db = {}  # Sites that allowed to be merged to other sites {address: type, ...}
     merged_to_merger = {}  # {address: [site1, site2, ...]} cache
     site_manager = None  # Site manager for merger sites
@@ -37,7 +38,8 @@ def checkMergerPath(address, inner_path):
             # Check if included site allows to include
             merged_address = merged_match.group(2)
             if merged_db.get(merged_address) == merger_type:
-                inner_path = re.sub("^merged-(.*?)/([A-Za-z0-9]{26,35})/", "", inner_path)
+                inner_path = re.sub(
+                    "^merged-(.*?)/([A-Za-z0-9]{26,35})/", "", inner_path)
                 return merged_address, inner_path
             else:
                 raise Exception(
@@ -83,9 +85,11 @@ class UiWebsocketPlugin(object):
                 site_manager.need(address)
                 added += 1
             except Exception as err:
-                self.cmd("notification", ["error", _["Adding <b>%s</b> failed: %s"] % (address, err)])
+                self.cmd("notification", ["error", _[
+                         "Adding <b>%s</b> failed: %s"] % (address, err)])
         if added:
-            self.cmd("notification", ["done", _["Added <b>%s</b> new site"] % added, 5000])
+            self.cmd("notification", [
+                     "done", _["Added <b>%s</b> new site"] % added, 5000])
         RateLimit.called(self.site.address + "-MergerSiteAdd")
         site_manager.updateMergerSites()
 
@@ -102,7 +106,8 @@ class UiWebsocketPlugin(object):
         if merged_db.get(address) not in merger_types:
             return self.response(to, {"error": "Merged type (%s) not in %s" % (merged_db.get(address), merger_types)})
 
-        self.cmd("notification", ["done", _["Site deleted: <b>%s</b>"] % address, 5000])
+        self.cmd("notification", [
+                 "done", _["Site deleted: <b>%s</b>"] % address, 5000])
         self.response(to, "ok")
 
     # Lists merged sites
@@ -133,7 +138,8 @@ class UiWebsocketPlugin(object):
     # Add support merger sites for file commands
     def mergerFuncWrapper(self, func_name, to, inner_path, *args, **kwargs):
         if inner_path.startswith("merged-"):
-            merged_address, merged_inner_path = checkMergerPath(self.site.address, inner_path)
+            merged_address, merged_inner_path = checkMergerPath(
+                self.site.address, inner_path)
 
             # Set the same cert for merged site
             merger_cert = self.user.getSiteData(self.site.address).get("cert")
@@ -141,7 +147,8 @@ class UiWebsocketPlugin(object):
                 self.user.setCert(merged_address, merger_cert)
 
             req_self = copy.copy(self)
-            req_self.site = self.server.sites.get(merged_address)  # Change the site to the merged one
+            # Change the site to the merged one
+            req_self.site = self.server.sites.get(merged_address)
 
             func = getattr(super(UiWebsocketPlugin, req_self), func_name)
             return func(to, merged_inner_path, *args, **kwargs)
@@ -177,17 +184,21 @@ class UiWebsocketPlugin(object):
         return self.mergerFuncWrapper("actionOptionalFileDelete", to, inner_path, *args, **kwargs)
 
     def actionBigfileUploadInit(self, to, inner_path, *args, **kwargs):
-        back = self.mergerFuncWrapper("actionBigfileUploadInit", to, inner_path, *args, **kwargs)
+        back = self.mergerFuncWrapper(
+            "actionBigfileUploadInit", to, inner_path, *args, **kwargs)
         if inner_path.startswith("merged-"):
-            merged_address, merged_inner_path = checkMergerPath(self.site.address, inner_path)
-            back["inner_path"] = "merged-%s/%s/%s" % (merged_db[merged_address], merged_address, back["inner_path"])
+            merged_address, merged_inner_path = checkMergerPath(
+                self.site.address, inner_path)
+            back["inner_path"] = "merged-%s/%s/%s" % (
+                merged_db[merged_address], merged_address, back["inner_path"])
         return back
 
     # Add support merger sites for file commands with privatekey parameter
     def mergerFuncWrapperWithPrivatekey(self, func_name, to, privatekey, inner_path, *args, **kwargs):
         func = getattr(super(UiWebsocketPlugin, self), func_name)
         if inner_path.startswith("merged-"):
-            merged_address, merged_inner_path = checkMergerPath(self.site.address, inner_path)
+            merged_address, merged_inner_path = checkMergerPath(
+                self.site.address, inner_path)
             merged_site = self.server.sites.get(merged_address)
 
             # Set the same cert for merged site
@@ -229,13 +240,16 @@ class UiWebsocketPlugin(object):
                 continue
             site = self.server.sites.get(address)
             try:
-                merged_sites.append(site.content_manager.contents.get("content.json").get("title", address))
+                merged_sites.append(site.content_manager.contents.get(
+                    "content.json").get("title", address))
             except Exception:
                 merged_sites.append(address)
 
-        details = _["Read and write permissions to sites with merged type of <b>%s</b> "] % merger_type
+        details = _[
+            "Read and write permissions to sites with merged type of <b>%s</b> "] % merger_type
         details += _["(%s sites)"] % len(merged_sites)
-        details += "<div style='white-space: normal; max-width: 400px'>%s</div>" % ", ".join(merged_sites)
+        details += "<div style='white-space: normal; max-width: 400px'>%s</div>" % ", ".join(
+            merged_sites)
         self.response(to, details)
 
 
@@ -246,7 +260,8 @@ class UiRequestPlugin(object):
         path_parts = super(UiRequestPlugin, self).parsePath(path)
         if "merged-" not in path:  # Optimization
             return path_parts
-        path_parts["address"], path_parts["inner_path"] = checkMergerPath(path_parts["address"], path_parts["inner_path"])
+        path_parts["address"], path_parts["inner_path"] = checkMergerPath(
+            path_parts["address"], path_parts["inner_path"])
         return path_parts
 
 
@@ -275,20 +290,26 @@ class SiteStoragePlugin(object):
             merged_type = merged_db[merged_site.address]
             for content_inner_path, content in merged_site.content_manager.contents.items():
                 # content.json file itself
-                if merged_site.storage.isFile(content_inner_path):  # Missing content.json file
-                    merged_inner_path = "merged-%s/%s/%s" % (merged_type, merged_site.address, content_inner_path)
+                # Missing content.json file
+                if merged_site.storage.isFile(content_inner_path):
+                    merged_inner_path = "merged-%s/%s/%s" % (
+                        merged_type, merged_site.address, content_inner_path)
                     yield merged_inner_path, merged_site.storage.getPath(content_inner_path)
                 else:
                     merged_site.log.error("[MISSING] %s" % content_inner_path)
                 # Data files in content.json
-                content_inner_path_dir = helper.getDirname(content_inner_path)  # Content.json dir relative to site
+                content_inner_path_dir = helper.getDirname(
+                    content_inner_path)  # Content.json dir relative to site
                 for file_relative_path in list(content.get("files", {}).keys()) + list(content.get("files_optional", {}).keys()):
                     if not file_relative_path.endswith(".json"):
                         continue  # We only interesed in json files
-                    file_inner_path = content_inner_path_dir + file_relative_path  # File Relative to site dir
-                    file_inner_path = file_inner_path.strip("/")  # Strip leading /
+                    file_inner_path = content_inner_path_dir + \
+                        file_relative_path  # File Relative to site dir
+                    file_inner_path = file_inner_path.strip(
+                        "/")  # Strip leading /
                     if merged_site.storage.isFile(file_inner_path):
-                        merged_inner_path = "merged-%s/%s/%s" % (merged_type, merged_site.address, file_inner_path)
+                        merged_inner_path = "merged-%s/%s/%s" % (
+                            merged_type, merged_site.address, file_inner_path)
                         yield merged_inner_path, merged_site.storage.getPath(file_inner_path)
                     else:
                         merged_site.log.error("[MISSING] %s" % file_inner_path)
@@ -308,12 +329,14 @@ class SiteStoragePlugin(object):
         for merger_site in merged_to_merger.get(self.site.address, []):
             if merger_site.address == self.site.address:  # Avoid infinite loop
                 continue
-            virtual_path = "merged-%s/%s/%s" % (merged_type, self.site.address, inner_path)
+            virtual_path = "merged-%s/%s/%s" % (merged_type,
+                                                self.site.address, inner_path)
             if inner_path.endswith(".json"):
                 if file is not None:
                     merger_site.storage.onUpdated(virtual_path, file=file)
                 else:
-                    merger_site.storage.onUpdated(virtual_path, file=self.open(inner_path))
+                    merger_site.storage.onUpdated(
+                        virtual_path, file=self.open(inner_path))
             else:
                 merger_site.storage.onUpdated(virtual_path)
 
@@ -327,7 +350,8 @@ class SitePlugin(object):
             if merger_site.address == self.address:
                 continue
             for ws in merger_site.websockets:
-                ws.event("siteChanged", self, {"event": ["file_done", inner_path]})
+                ws.event("siteChanged", self, {
+                         "event": ["file_done", inner_path]})
 
     def fileFailed(self, inner_path):
         super(SitePlugin, self).fileFailed(inner_path)
@@ -336,7 +360,8 @@ class SitePlugin(object):
             if merger_site.address == self.address:
                 continue
             for ws in merger_site.websockets:
-                ws.event("siteChanged", self, {"event": ["file_failed", inner_path]})
+                ws.event("siteChanged", self, {
+                         "event": ["file_failed", inner_path]})
 
 
 @PluginManager.registerTo("SiteManager")
@@ -354,9 +379,11 @@ class SiteManagerPlugin(object):
         for site in self.sites.values():
             # Update merged sites
             try:
-                merged_type = site.content_manager.contents.get("content.json", {}).get("merged_type")
+                merged_type = site.content_manager.contents.get(
+                    "content.json", {}).get("merged_type")
             except Exception as err:
-                self.log.error("Error loading site %s: %s" % (site.address, Debug.formatException(err)))
+                self.log.error("Error loading site %s: %s" %
+                               (site.address, Debug.formatException(err)))
                 continue
             if merged_type:
                 merged_db[site.address] = merged_type

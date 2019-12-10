@@ -3,8 +3,8 @@ import html
 import copy
 import os
 
-from Plugin import PluginManager
-from Translate import Translate
+from src.Plugin import PluginManager
+from src.Translate import Translate
 
 
 plugin_dir = os.path.dirname(__file__)
@@ -21,7 +21,8 @@ def getCorsPath(site, inner_path):
     cors_inner_path = match.group(2)
 
     if not "Cors:%s" % cors_address in site.settings["permissions"]:
-        raise Exception("This site has no permission to access site %s" % cors_address)
+        raise Exception(
+            "This site has no permission to access site %s" % cors_address)
 
     return cors_address, cors_inner_path
 
@@ -47,7 +48,8 @@ class UiWebsocketPlugin(object):
             cors_address, cors_inner_path = getCorsPath(self.site, inner_path)
 
             req_self = copy.copy(self)
-            req_self.site = self.server.sites.get(cors_address)  # Change the site to the merged one
+            # Change the site to the merged one
+            req_self.site = self.server.sites.get(cors_address)
             if not req_self.site:
                 return {"error": "No site found"}
 
@@ -76,7 +78,8 @@ class UiWebsocketPlugin(object):
     def actionCorsPermission(self, to, address):
         site = self.server.sites.get(address)
         if site:
-            site_name = site.content_manager.contents.get("content.json", {}).get("title")
+            site_name = site.content_manager.contents.get(
+                "content.json", {}).get("title")
             button_title = _["Grant"]
         else:
             site_name = address
@@ -87,7 +90,8 @@ class UiWebsocketPlugin(object):
 
         self.cmd(
             "confirm",
-            [_["This site requests <b>read</b> permission to: <b>%s</b>"] % html.escape(site_name), button_title],
+            [_["This site requests <b>read</b> permission to: <b>%s</b>"] %
+                html.escape(site_name), button_title],
             lambda res: self.cbCorsPermission(to, address)
         )
 
@@ -107,7 +111,8 @@ class UiRequestPlugin(object):
             return path_parts
         site = self.server.sites[path_parts["address"]]
         try:
-            path_parts["address"], path_parts["inner_path"] = getCorsPath(site, path_parts["inner_path"])
+            path_parts["address"], path_parts["inner_path"] = getCorsPath(
+                site, path_parts["inner_path"])
         except Exception:
             return None
         return path_parts

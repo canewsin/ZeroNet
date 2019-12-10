@@ -2,8 +2,8 @@ import time
 
 import gevent
 
-from Plugin import PluginManager
-from Config import config
+from src.Plugin import PluginManager
+from src.Config import config
 from . import BroadcastServer
 
 
@@ -15,7 +15,8 @@ class SiteAnnouncerPlugin(object):
         thread = None
         if local_announcer and (force or time.time() - local_announcer.last_discover > 5 * 60):
             thread = gevent.spawn(local_announcer.discover, force=force)
-        back = super(SiteAnnouncerPlugin, self).announce(force=force, *args, **kwargs)
+        back = super(SiteAnnouncerPlugin, self).announce(
+            force=force, *args, **kwargs)
 
         if thread:
             thread.join()
@@ -25,7 +26,8 @@ class SiteAnnouncerPlugin(object):
 
 class LocalAnnouncer(BroadcastServer.BroadcastServer):
     def __init__(self, server, listen_port):
-        super(LocalAnnouncer, self).__init__("zeronet", listen_port=listen_port)
+        super(LocalAnnouncer, self).__init__(
+            "zeronet", listen_port=listen_port)
         self.server = server
 
         self.sender_info["peer_id"] = self.server.peer_id
@@ -45,8 +47,10 @@ class LocalAnnouncer(BroadcastServer.BroadcastServer):
         for peer_id, known_peer in list(self.known_peers.items()):
             if time.time() - known_peer["found"] > 20 * 60:
                 del(self.known_peers[peer_id])
-                self.log.debug("Timeout, removing from known_peers: %s" % peer_id)
-        self.broadcast({"cmd": "discoverRequest", "params": {}}, port=self.listen_port)
+                self.log.debug(
+                    "Timeout, removing from known_peers: %s" % peer_id)
+        self.broadcast({"cmd": "discoverRequest", "params": {}},
+                       port=self.listen_port)
 
     def actionDiscoverRequest(self, sender, params):
         back = {
@@ -57,9 +61,12 @@ class LocalAnnouncer(BroadcastServer.BroadcastServer):
         }
 
         if sender["peer_id"] not in self.known_peers:
-            self.known_peers[sender["peer_id"]] = {"added": time.time(), "sites_changed": 0, "updated": 0, "found": time.time()}
-            self.log.debug("Got discover request from unknown peer %s (%s), time to refresh known peers" % (sender["ip"], sender["peer_id"]))
-            gevent.spawn_later(1.0, self.discover)  # Let the response arrive first to the requester
+            self.known_peers[sender["peer_id"]] = {"added": time.time(
+            ), "sites_changed": 0, "updated": 0, "found": time.time()}
+            self.log.debug("Got discover request from unknown peer %s (%s), time to refresh known peers" % (
+                sender["ip"], sender["peer_id"]))
+            # Let the response arrive first to the requester
+            gevent.spawn_later(1.0, self.discover)
 
         return back
 
@@ -96,7 +103,8 @@ class LocalAnnouncer(BroadcastServer.BroadcastServer):
         added_sites = []
         for site in self.server.sites.values():
             if site.address_hash in peer_sites:
-                added = site.addPeer(sender["ip"], sender["port"], source="local")
+                added = site.addPeer(
+                    sender["ip"], sender["port"], source="local")
                 num_found += 1
                 if added:
                     site.worker_manager.onPeers()
@@ -107,13 +115,15 @@ class LocalAnnouncer(BroadcastServer.BroadcastServer):
         if sender["peer_id"] not in self.known_peers:
             self.known_peers[sender["peer_id"]] = {"added": time.time()}
 
-        self.known_peers[sender["peer_id"]]["sites_changed"] = params["sites_changed"]
+        self.known_peers[sender["peer_id"]
+                         ]["sites_changed"] = params["sites_changed"]
         self.known_peers[sender["peer_id"]]["updated"] = time.time()
         self.known_peers[sender["peer_id"]]["found"] = time.time()
 
         self.log.debug(
             "Tracker result: Discover from %s response parsed in %.3fs, found: %s added: %s of %s" %
-            (sender["ip"], time.time() - s, num_found, added_sites, len(peer_sites))
+            (sender["ip"], time.time() - s,
+             num_found, added_sites, len(peer_sites))
         )
 
 
@@ -142,6 +152,7 @@ class FileServerPlugin(object):
 class ConfigPlugin(object):
     def createArguments(self):
         group = self.parser.add_argument_group("AnnounceLocal plugin")
-        group.add_argument('--broadcast_port', help='UDP broadcasting port for local peer discovery', default=1544, type=int, metavar='port')
+        group.add_argument('--broadcast_port', help='UDP broadcasting port for local peer discovery',
+                           default=1544, type=int, metavar='port')
 
         return super(ConfigPlugin, self).createArguments()

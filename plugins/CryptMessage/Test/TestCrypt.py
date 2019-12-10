@@ -1,6 +1,6 @@
 import pytest
 import base64
-from CryptMessage import CryptMessage
+from ...CryptMessage import CryptMessage
 
 
 @pytest.mark.usefixtures("resetSettings")
@@ -14,7 +14,8 @@ class TestCrypt:
     @pytest.mark.parametrize("text_repeat", [1, 10, 128, 1024])
     def testEncryptEcies(self, text, text_repeat):
         text_repeated = text * text_repeat
-        aes_key, encrypted = CryptMessage.eciesEncrypt(text_repeated, self.publickey)
+        aes_key, encrypted = CryptMessage.eciesEncrypt(
+            text_repeated, self.publickey)
         assert len(aes_key) == 32
         # assert len(encrypted) == 134 + int(len(text) / 16) * 16  # Not always true
 
@@ -31,10 +32,12 @@ class TestCrypt:
         assert len(pub) == 44  # Compressed, b64 encoded publickey
 
         # Different pubkey for specificed index
-        assert ui_websocket.testAction("UserPublickey", 1) != ui_websocket.testAction("UserPublickey", 0)
+        assert ui_websocket.testAction(
+            "UserPublickey", 1) != ui_websocket.testAction("UserPublickey", 0)
 
         # Same publickey for same index
-        assert ui_websocket.testAction("UserPublickey", 2) == ui_websocket.testAction("UserPublickey", 2)
+        assert ui_websocket.testAction(
+            "UserPublickey", 2) == ui_websocket.testAction("UserPublickey", 2)
 
         # Different publickey for different cert
         site_data = ui_websocket.user.getSiteData(ui_websocket.site.address)
@@ -65,7 +68,8 @@ class TestCrypt:
         assert decrypted == None
 
         # Decrypt batch
-        decrypted = ui_websocket.testAction("EciesDecrypt", [encrypted, "baad", encrypted])
+        decrypted = ui_websocket.testAction(
+            "EciesDecrypt", [encrypted, "baad", encrypted])
         assert decrypted == ["hello", None, "hello"]
 
     def testEciesUtf8(self, ui_websocket):
@@ -85,9 +89,11 @@ class TestCrypt:
         assert ui_websocket.ws.getResult() == "hello"
 
         # Decrypt using AES
-        aes_iv, aes_encrypted = CryptMessage.split(base64.b64decode(ecies_encrypted))
+        aes_iv, aes_encrypted = CryptMessage.split(
+            base64.b64decode(ecies_encrypted))
 
-        ui_websocket.actionAesDecrypt(0, base64.b64encode(aes_iv), base64.b64encode(aes_encrypted), aes_key)
+        ui_websocket.actionAesDecrypt(0, base64.b64encode(
+            aes_iv), base64.b64encode(aes_encrypted), aes_key)
         assert ui_websocket.ws.getResult() == "hello"
 
     def testAes(self, ui_websocket):
@@ -109,11 +115,13 @@ class TestCrypt:
         assert [key, iv, encrypted] != [key2, iv2, encrypted2]
 
         # 2 correct key
-        ui_websocket.actionAesDecrypt(0, [[iv, encrypted], [iv, encrypted], [iv, "baad"], [iv2, encrypted2]], [key])
+        ui_websocket.actionAesDecrypt(0, [[iv, encrypted], [iv, encrypted], [
+                                      iv, "baad"], [iv2, encrypted2]], [key])
         assert ui_websocket.ws.getResult() == ["hello", "hello", None, None]
 
         # 3 key
-        ui_websocket.actionAesDecrypt(0, [[iv, encrypted], [iv, encrypted], [iv, "baad"], [iv2, encrypted2]], [key, key2])
+        ui_websocket.actionAesDecrypt(0, [[iv, encrypted], [iv, encrypted], [
+                                      iv, "baad"], [iv2, encrypted2]], [key, key2])
         assert ui_websocket.ws.getResult() == ["hello", "hello", None, "hello"]
 
     def testAesUtf8(self, ui_websocket):

@@ -7,9 +7,9 @@ from stem import Signal
 from stem.control import Controller
 from stem.socket import ControlPort
 
-from Plugin import PluginManager
-from Config import config
-from Debug import Debug
+from src.Plugin import PluginManager
+from src.Config import config
+from src.Debug import Debug
 
 if config.tor != "disable":
     from gevent import monkey
@@ -24,10 +24,13 @@ else:
 class PatchedControlPort(ControlPort):
     def _make_socket(self):
         try:
-            if "socket_noproxy" in dir(socket):  # Socket proxy-patched, use non-proxy one
-                control_socket = socket.socket_noproxy(socket.AF_INET, socket.SOCK_STREAM)
+            # Socket proxy-patched, use non-proxy one
+            if "socket_noproxy" in dir(socket):
+                control_socket = socket.socket_noproxy(
+                    socket.AF_INET, socket.SOCK_STREAM)
             else:
-                control_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                control_socket = socket.socket(
+                    socket.AF_INET, socket.SOCK_STREAM)
 
             # TODO: repeated code - consider making a separate method
 
@@ -36,7 +39,8 @@ class PatchedControlPort(ControlPort):
         except socket.error as exc:
             raise stem.SocketError(exc)
 
-def from_port(address = '127.0.0.1', port = 'default'):
+
+def from_port(address='127.0.0.1', port='default'):
     import stem.connection
 
     if not stem.util.connection.is_valid_ipv4_address(address):
@@ -56,12 +60,14 @@ def from_port(address = '127.0.0.1', port = 'default'):
 class TorManagerPlugin(object):
 
     def connectController(self):
-        self.log.info("Authenticate using Stem... %s:%s" % (self.ip, self.port))
+        self.log.info("Authenticate using Stem... %s:%s" %
+                      (self.ip, self.port))
 
         try:
             with self.lock:
                 if config.tor_password:
-                    controller = from_port(port=self.port, password=config.tor_password)
+                    controller = from_port(
+                        port=self.port, password=config.tor_password)
                 else:
                     controller = from_port(port=self.port)
                 controller.authenticate()
@@ -74,15 +80,14 @@ class TorManagerPlugin(object):
 
             self.controller = None
             self.status = "Error (%s)" % err
-            self.log.error("Tor stem connect error: %s" % Debug.formatException(err))
+            self.log.error("Tor stem connect error: %s" %
+                           Debug.formatException(err))
 
         return self.controller
-
 
     def disconnect(self):
         self.controller.close()
         self.controller = None
-
 
     def resetCircuits(self):
         try:
@@ -91,17 +96,18 @@ class TorManagerPlugin(object):
             self.status = "Stem reset circuits error (%s)" % err
             self.log.error("Stem reset circuits error: %s" % err)
 
-
     def makeOnionAndKey(self):
         try:
             service = self.controller.create_ephemeral_hidden_service(
                 {self.fileserver_port: self.fileserver_port},
-                await_publication = False
+                await_publication=False
             )
             if service.private_key_type != "RSA1024":
-                raise Exception("ZeroNet doesn't support crypto " + service.private_key_type)
+                raise Exception(
+                    "ZeroNet doesn't support crypto " + service.private_key_type)
 
-            self.log.debug("Stem created %s.onion (async descriptor publication)" % service.service_id)
+            self.log.debug(
+                "Stem created %s.onion (async descriptor publication)" % service.service_id)
 
             return (service.service_id, service.private_key)
 
@@ -110,24 +116,24 @@ class TorManagerPlugin(object):
             self.log.error("Failed to create hidden service with Stem: " + err)
             return False
 
-
     def delOnion(self, address):
         try:
             self.controller.remove_ephemeral_hidden_service(address)
             return True
         except Exception as err:
             self.status = "DelOnion error (Stem: %s)" % err
-            self.log.error("Stem failed to delete %s.onion: %s" % (address, err))
-            self.disconnect() # Why?
+            self.log.error("Stem failed to delete %s.onion: %s" %
+                           (address, err))
+            self.disconnect()  # Why?
             return False
-
 
     def request(self, cmd):
         with self.lock:
             if not self.enabled:
                 return False
             else:
-                self.log.error("[WARNING] StemPort self.request should not be called")
+                self.log.error(
+                    "[WARNING] StemPort self.request should not be called")
                 return ""
 
     def send(self, cmd, conn=None):

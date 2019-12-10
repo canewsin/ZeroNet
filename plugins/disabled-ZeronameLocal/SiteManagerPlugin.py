@@ -1,11 +1,18 @@
-import logging, json, os, re, sys, time, socket
-from Plugin import PluginManager
-from Config import config
-from Debug import Debug
+import logging
+import json
+import os
+import re
+import sys
+import time
+import socket
+from src.Plugin import PluginManager
+from src.Config import config
+from src.Debug import Debug
 from http.client import HTTPSConnection, HTTPConnection, HTTPException
 from base64 import b64encode
 
-allow_reload = False # No reload supported
+allow_reload = False  # No reload supported
+
 
 @PluginManager.registerTo("SiteManager")
 class SiteManagerPlugin(object):
@@ -15,14 +22,18 @@ class SiteManagerPlugin(object):
         self.error_message = None
         if not config.namecoin_host or not config.namecoin_rpcport or not config.namecoin_rpcuser or not config.namecoin_rpcpassword:
             self.error_message = "Missing parameters"
-            self.log.error("Missing parameters to connect to namecoin node. Please check all the arguments needed with '--help'. Zeronet will continue working without it.")
+            self.log.error(
+                "Missing parameters to connect to namecoin node. Please check all the arguments needed with '--help'. Zeronet will continue working without it.")
             return
 
-        url = "%(host)s:%(port)s" % {"host": config.namecoin_host, "port": config.namecoin_rpcport}
+        url = "%(host)s:%(port)s" % {
+            "host": config.namecoin_host, "port": config.namecoin_rpcport}
         self.c = HTTPConnection(url, timeout=3)
-        user_pass = "%(user)s:%(password)s" % {"user": config.namecoin_rpcuser, "password": config.namecoin_rpcpassword}
+        user_pass = "%(user)s:%(password)s" % {
+            "user": config.namecoin_rpcuser, "password": config.namecoin_rpcpassword}
         userAndPass = b64encode(bytes(user_pass, "utf-8")).decode("ascii")
-        self.headers = {"Authorization" : "Basic %s" %  userAndPass, "Content-Type": " application/json " }
+        self.headers = {"Authorization": "Basic %s" %
+                        userAndPass, "Content-Type": " application/json "}
 
         payload = json.dumps({
             "jsonrpc": "2.0",
@@ -41,7 +52,8 @@ class SiteManagerPlugin(object):
             else:
                 raise Exception(response.reason)
         except Exception as err:
-            self.log.error("The Namecoin node is unreachable. Please check the configuration value are correct. Zeronet will continue working without it.")
+            self.log.error(
+                "The Namecoin node is unreachable. Please check the configuration value are correct. Zeronet will continue working without it.")
             self.error_message = err
         self.cache = dict()
 
@@ -91,18 +103,20 @@ class SiteManagerPlugin(object):
     def resolveDomain(self, domain):
         domain = domain.lower()
 
-        #remove .bit on end
+        # remove .bit on end
         if domain[-4:] == ".bit":
             domain = domain[0:-4]
 
         domain_array = domain.split(".")
 
         if self.error_message:
-            self.log.error("Not able to connect to Namecoin node : {!s}".format(self.error_message))
+            self.log.error(
+                "Not able to connect to Namecoin node : {!s}".format(self.error_message))
             return None
 
         if len(domain_array) > 2:
-            self.log.error("Too many subdomains! Can only handle one level (eg. staging.mixtape.bit)")
+            self.log.error(
+                "Too many subdomains! Can only handle one level (eg. staging.mixtape.bit)")
             return None
 
         subdomain = ""
@@ -132,7 +146,7 @@ class SiteManagerPlugin(object):
             self.c.close()
             domain_object = json.loads(data.decode())["result"]
         except Exception as err:
-            #domain doesn't exist
+            # domain doesn't exist
             return None
 
         if "zeronet" in domain_object["value"]:
@@ -144,7 +158,8 @@ class SiteManagerPlugin(object):
                 # } is valid
                 zeronet_domains = {"": zeronet_domains}
 
-            self.cache[domain] = {"addresses_resolved": zeronet_domains, "time": time.time()}
+            self.cache[domain] = {
+                "addresses_resolved": zeronet_domains, "time": time.time()}
 
         elif "map" in domain_object["value"]:
             # Namecoin standard use {"map": { "blog": {"zeronet": "1D..."} }}
@@ -160,7 +175,8 @@ class SiteManagerPlugin(object):
                 # }}
                 zeronet_domains[""] = data_map["zeronet"]
 
-            self.cache[domain] = {"addresses_resolved": zeronet_domains, "time": time.time()}
+            self.cache[domain] = {
+                "addresses_resolved": zeronet_domains, "time": time.time()}
 
         else:
             # No Zeronet address registered
@@ -168,13 +184,18 @@ class SiteManagerPlugin(object):
 
         return self.cache[domain]["addresses_resolved"][subdomain]
 
+
 @PluginManager.registerTo("ConfigPlugin")
 class ConfigPlugin(object):
     def createArguments(self):
         group = self.parser.add_argument_group("Zeroname Local plugin")
-        group.add_argument('--namecoin_host', help="Host to namecoin node (eg. 127.0.0.1)")
-        group.add_argument('--namecoin_rpcport', help="Port to connect (eg. 8336)")
-        group.add_argument('--namecoin_rpcuser', help="RPC user to connect to the namecoin node (eg. nofish)")
-        group.add_argument('--namecoin_rpcpassword', help="RPC password to connect to namecoin node")
+        group.add_argument('--namecoin_host',
+                           help="Host to namecoin node (eg. 127.0.0.1)")
+        group.add_argument('--namecoin_rpcport',
+                           help="Port to connect (eg. 8336)")
+        group.add_argument(
+            '--namecoin_rpcuser', help="RPC user to connect to the namecoin node (eg. nofish)")
+        group.add_argument('--namecoin_rpcpassword',
+                           help="RPC password to connect to namecoin node")
 
         return super(ConfigPlugin, self).createArguments()

@@ -5,11 +5,11 @@ import os
 
 import gevent
 
-from Plugin import PluginManager
-from Config import config
-from util import helper
-from util.Flag import flag
-from Translate import Translate
+from src.Plugin import PluginManager
+from src.Config import config
+from src.util import helper
+from src.util.Flag import flag
+from src.Translate import Translate
 
 
 plugin_dir = os.path.dirname(__file__)

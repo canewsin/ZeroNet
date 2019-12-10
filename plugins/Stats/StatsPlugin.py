@@ -4,11 +4,11 @@ import os
 import json
 from collections import OrderedDict
 
-from Plugin import PluginManager
-from Config import config
-from util import helper
-from Debug import Debug
-from Db import Db
+from src.Plugin import PluginManager
+from src.Config import config
+from src.util import helper
+from src.Debug import Debug
+from src.Db import Db
 
 
 @PluginManager.registerTo("UiRequest")
@@ -40,15 +40,14 @@ class UiRequestPlugin(object):
     def actionStats(self):
         import gc
         import sys
-        from Ui import UiRequest
-        from Crypt import CryptConnection
-        import main
-
+        from src.Ui import UiRequest
+        from src.Crypt import CryptConnection
+        from . import main
 
         hpy = None
         if self.get.get("size") == "1":  # Calc obj size
             try:
-                import guppy
+                from . import guppy
                 hpy = guppy.hpy()
             except:
                 pass
@@ -86,7 +85,7 @@ class UiRequestPlugin(object):
         yield "Blocks: %s" % Debug.num_block
 
         try:
-            import psutil
+            from . import psutil
             process = psutil.Process(os.getpid())
             mem = process.get_memory_info()[0] / float(2 ** 20)
             yield "Mem: %.2fMB | " % mem
@@ -114,7 +113,8 @@ class UiRequestPlugin(object):
                 cipher = connection.crypt
                 tls_version = ""
             if "time" in connection.handshake and connection.last_ping_delay:
-                time_correction = connection.handshake["time"] - connection.handshake_time - connection.last_ping_delay
+                time_correction = connection.handshake["time"] - \
+                    connection.handshake_time - connection.last_ping_delay
             else:
                 time_correction = 0.0
             yield self.formatTableRow([
@@ -122,7 +122,8 @@ class UiRequestPlugin(object):
                 ("%s", connection.type),
                 ("%s:%s", (connection.ip, connection.port)),
                 ("%s", connection.handshake.get("port_opened")),
-                ("<span title='%s %s'>%s</span>", (cipher, tls_version, connection.crypt)),
+                ("<span title='%s %s'>%s</span>",
+                 (cipher, tls_version, connection.crypt)),
                 ("%6.3f", connection.last_ping_delay),
                 ("%s", connection.incomplete_buff_recv),
                 ("%s", connection.bad_actions),
@@ -132,9 +133,11 @@ class UiRequestPlugin(object):
                 ("%.3f", connection.cpu_time),
                 ("%.0fk", connection.bytes_sent / 1024),
                 ("%.0fk", connection.bytes_recv / 1024),
-                ("<span title='Recv: %s'>%s</span>", (connection.last_cmd_recv, connection.last_cmd_sent)),
+                ("<span title='Recv: %s'>%s</span>",
+                 (connection.last_cmd_recv, connection.last_cmd_sent)),
                 ("%s", list(connection.waiting_requests.keys())),
-                ("%s r%s", (connection.handshake.get("version"), connection.handshake.get("rev", "?"))),
+                ("%s r%s", (connection.handshake.get("version"),
+                            connection.handshake.get("rev", "?"))),
                 ("%.2fs", time_correction),
                 ("%s", connection.sites)
             ])
@@ -143,28 +146,33 @@ class UiRequestPlugin(object):
         # Trackers
         yield "<br><br><b>Trackers:</b><br>"
         yield "<table class='trackers'><tr> <th>address</th> <th>request</th> <th>successive errors</th> <th>last_request</th></tr>"
-        from Site import SiteAnnouncer # importing at the top of the file breaks plugins
+        # importing at the top of the file breaks plugins
+        from src.Site import SiteAnnouncer
         for tracker_address, tracker_stat in sorted(SiteAnnouncer.global_stats.items()):
             yield self.formatTableRow([
                 ("%s", tracker_address),
                 ("%s", tracker_stat["num_request"]),
                 ("%s", tracker_stat["num_error"]),
-                ("%.0f min ago", min(999, (time.time() - tracker_stat["time_request"]) / 60))
+                ("%.0f min ago", min(
+                    999, (time.time() - tracker_stat["time_request"]) / 60))
             ])
         yield "</table>"
 
         if "AnnounceShare" in PluginManager.plugin_manager.plugin_names:
             yield "<br><br><b>Shared trackers:</b><br>"
             yield "<table class='trackers'><tr> <th>address</th> <th>added</th> <th>found</th> <th>latency</th> <th>successive errors</th> <th>last_success</th></tr>"
-            from AnnounceShare import AnnounceSharePlugin
+            from ..AnnounceShare import AnnounceSharePlugin
             for tracker_address, tracker_stat in sorted(AnnounceSharePlugin.tracker_storage.getTrackers().items()):
                 yield self.formatTableRow([
                     ("%s", tracker_address),
-                    ("%.0f min ago", min(999, (time.time() - tracker_stat["time_added"]) / 60)),
-                    ("%.0f min ago", min(999, (time.time() - tracker_stat.get("time_found", 0)) / 60)),
+                    ("%.0f min ago", min(
+                        999, (time.time() - tracker_stat["time_added"]) / 60)),
+                    ("%.0f min ago", min(999, (time.time() -
+                                               tracker_stat.get("time_found", 0)) / 60)),
                     ("%.3fs", tracker_stat["latency"]),
                     ("%s", tracker_stat["num_error"]),
-                    ("%.0f min ago", min(999, (time.time() - tracker_stat["time_success"]) / 60)),
+                    ("%.0f min ago", min(
+                        999, (time.time() - tracker_stat["time_success"]) / 60)),
                 ])
             yield "</table>"
 
@@ -176,15 +184,16 @@ class UiRequestPlugin(object):
         # Db
         yield "<br><br><b>Db</b>:<br>"
         for db in Db.opened_dbs:
-            tables = [row["name"] for row in db.execute("SELECT name FROM sqlite_master WHERE type = 'table'").fetchall()]
+            tables = [row["name"] for row in db.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'").fetchall()]
             table_rows = {}
             for table in tables:
-                table_rows[table] = db.execute("SELECT COUNT(*) AS c FROM %s" % table).fetchone()["c"]
+                table_rows[table] = db.execute(
+                    "SELECT COUNT(*) AS c FROM %s" % table).fetchone()["c"]
             db_size = os.path.getsize(db.db_path) / 1024.0 / 1024.0
             yield "- %.3fs: %s %.3fMB, table rows: %s<br>" % (
                 time.time() - db.last_query_time, db.db_path, db_size, json.dumps(table_rows, sort_keys=True)
             )
-
 
         # Sites
         yield "<br><br><b>Sites</b>:"
@@ -196,15 +205,18 @@ class UiRequestPlugin(object):
                     """<a href='#' onclick='document.getElementById("peers_%s").style.display="initial"; return false'>%s</a>""",
                     (site.address, site.address)
                 ),
-                ("%s", [peer.connection.id for peer in list(site.peers.values()) if peer.connection and peer.connection.connected]),
+                ("%s", [peer.connection.id for peer in list(
+                    site.peers.values()) if peer.connection and peer.connection.connected]),
                 ("%s/%s/%s", (
-                    len([peer for peer in list(site.peers.values()) if peer.connection and peer.connection.connected]),
+                    len([peer for peer in list(site.peers.values())
+                         if peer.connection and peer.connection.connected]),
                     len(site.getConnectablePeers(100)),
                     len(site.peers)
                 )),
                 ("%s (loaded: %s)", (
                     len(site.content_manager.contents),
-                    len([key for key, val in dict(site.content_manager.contents).items() if val])
+                    len([key for key, val in dict(
+                        site.content_manager.contents).items() if val])
                 )),
                 ("%.0fk", site.settings.get("bytes_sent", 0) / 1024),
                 ("%.0fk", site.settings.get("bytes_recv", 0) / 1024),
@@ -288,7 +300,8 @@ class UiRequestPlugin(object):
             sum([stat[1] for stat in list(obj_count.values())])
         )
 
-        for obj, stat in sorted(list(obj_count.items()), key=lambda x: x[1][0], reverse=True):  # Sorted by count
+        # Sorted by count
+        for obj, stat in sorted(list(obj_count.items()), key=lambda x: x[1][0], reverse=True):
             yield " - %.1fkb = %s x <a href=\"/Listobj?type=%s\">%s</a><br>" % (stat[1], stat[0], obj, html.escape(obj))
 
         # Classes
@@ -302,7 +315,8 @@ class UiRequestPlugin(object):
             if class_name not in class_count:
                 class_count[class_name] = [0, 0]
             class_count[class_name][0] += 1  # Count
-            class_count[class_name][1] += float(sys.getsizeof(obj)) / 1024  # Size
+            # Size
+            class_count[class_name][1] += float(sys.getsizeof(obj)) / 1024
 
         yield "<br><br><b>Classes in memory (types: %s, total: %s, %.2fkb):</b><br>" % (
             len(class_count),
@@ -310,7 +324,8 @@ class UiRequestPlugin(object):
             sum([stat[1] for stat in list(class_count.values())])
         )
 
-        for obj, stat in sorted(list(class_count.items()), key=lambda x: x[1][0], reverse=True):  # Sorted by count
+        # Sorted by count
+        for obj, stat in sorted(list(class_count.items()), key=lambda x: x[1][0], reverse=True):
             yield " - %.1fkb = %s x <a href=\"/Dumpobj?class=%s\">%s</a><br>" % (stat[1], stat[0], obj, html.escape(obj))
 
         from greenlet import greenlet
@@ -349,7 +364,8 @@ class UiRequestPlugin(object):
         for obj in objs:
             yield " - %.1fkb: %s<br>" % (self.getObjSize(obj, hpy), html.escape(repr(obj)))
 
-        objs = [obj for obj in gc.get_objects() if isinstance(obj, self.server.log.__class__)]
+        objs = [obj for obj in gc.get_objects() if isinstance(
+            obj, self.server.log.__class__)]
         yield "<br>Loggers (%s):<br>" % len(objs)
         for obj in objs:
             yield " - %.1fkb: %s<br>" % (self.getObjSize(obj, hpy), html.escape(repr(obj.name)))
@@ -365,7 +381,8 @@ class UiRequestPlugin(object):
         for obj in objs:
             yield " - %.1fkb: %s<br>" % (self.getObjSize(obj, hpy), html.escape(repr(obj)))
 
-        objs = [(key, val) for key, val in sys.modules.items() if val is not None]
+        objs = [(key, val)
+                for key, val in sys.modules.items() if val is not None]
         objs.sort()
         yield "<br>Modules (%s):<br>" % len(objs)
         for module_name, module in objs:
@@ -449,13 +466,15 @@ class UiRequestPlugin(object):
             refs = [
                 ref for ref in gc.get_referrers(obj)
                 if hasattr(ref, "__class__") and
-                ref.__class__.__name__ not in ["list", "dict", "function", "type", "frame", "WeakSet", "tuple"]
+                ref.__class__.__name__ not in [
+                    "list", "dict", "function", "type", "frame", "WeakSet", "tuple"]
             ]
             if not refs:
                 continue
             try:
                 yield "%.1fkb <span title=\"%s\">%s</span>... " % (
-                    float(sys.getsizeof(obj)) / 1024, html.escape(str(obj)), html.escape(str(obj)[0:100].ljust(100))
+                    float(sys.getsizeof(obj)) / 1024, html.escape(str(obj)
+                                                                  ), html.escape(str(obj)[0:100].ljust(100))
                 )
             except:
                 continue
@@ -470,12 +489,14 @@ class UiRequestPlugin(object):
                 if ref_type not in ref_count:
                     ref_count[ref_type] = [0, 0]
                 ref_count[ref_type][0] += 1  # Count
-                ref_count[ref_type][1] += float(sys.getsizeof(obj)) / 1024  # Size
+                # Size
+                ref_count[ref_type][1] += float(sys.getsizeof(obj)) / 1024
             yield "<br>"
 
         yield "<br>Object referrer (total: %s, %.2fkb):<br>" % (len(ref_count), sum([stat[1] for stat in list(ref_count.values())]))
 
-        for obj, stat in sorted(list(ref_count.items()), key=lambda x: x[1][0], reverse=True)[0:30]:  # Sorted by count
+        # Sorted by count
+        for obj, stat in sorted(list(ref_count.items()), key=lambda x: x[1][0], reverse=True)[0:30]:
             yield " - %.1fkb = %s x %s<br>" % (stat[1], stat[0], html.escape(str(obj)))
 
         gc.collect()  # Implicit grabage collection

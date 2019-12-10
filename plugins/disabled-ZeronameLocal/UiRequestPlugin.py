@@ -1,10 +1,10 @@
 import re
-from Plugin import PluginManager
+from src.Plugin import PluginManager
 
 @PluginManager.registerTo("UiRequest")
 class UiRequestPlugin(object):
     def __init__(self, *args, **kwargs):
-        from Site import SiteManager
+        from src.Site import SiteManager
         self.site_manager = SiteManager.site_manager
         super(UiRequestPlugin, self).__init__(*args, **kwargs)
 

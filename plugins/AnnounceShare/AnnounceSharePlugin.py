@@ -6,9 +6,9 @@ import atexit
 
 import gevent
 
-from Config import config
-from Plugin import PluginManager
-from util import helper
+from src.Config import config
+from src.Plugin import PluginManager
+from src.util import helper
 
 
 class TrackerStorage(object):

@@ -4,8 +4,8 @@ import collections
 
 import gevent
 
-from util import helper
-from Plugin import PluginManager
+from src.util import helper
+from src.Plugin import PluginManager
 from . import ContentDbPlugin
 
 
@@ -13,7 +13,7 @@ from . import ContentDbPlugin
 @PluginManager.afterLoad
 def importPluginnedClasses():
     global config
-    from Config import config
+    from src.Config import config
 
 
 def processAccessLog():
@@ -24,7 +24,8 @@ def processAccessLog():
         for site_id in access_log:
             content_db.execute(
                 "UPDATE file_optional SET time_accessed = %s WHERE ?" % now,
-                {"site_id": site_id, "inner_path": list(access_log[site_id].keys())}
+                {"site_id": site_id, "inner_path": list(
+                    access_log[site_id].keys())}
             )
             num += len(access_log[site_id])
         access_log.clear()
@@ -46,8 +47,10 @@ def processRequestLog():
 
 
 if "access_log" not in locals().keys():  # To keep between module reloads
-    access_log = collections.defaultdict(dict)  # {site_id: {inner_path1: 1, inner_path2: 1...}}
-    request_log = collections.defaultdict(lambda: collections.defaultdict(int))  # {site_id: {inner_path1: 1, inner_path2: 1...}}
+    # {site_id: {inner_path1: 1, inner_path2: 1...}}
+    access_log = collections.defaultdict(dict)
+    # {site_id: {inner_path1: 1, inner_path2: 1...}}
+    request_log = collections.defaultdict(lambda: collections.defaultdict(int))
     helper.timer(61, processAccessLog)
     helper.timer(60, processRequestLog)
 
@@ -66,7 +69,8 @@ class ContentManagerPlugin(object):
 
         self.contents.db.executeDelayed(
             "UPDATE file_optional SET time_downloaded = :now, is_downloaded = 1, peer = peer + 1 WHERE site_id = :site_id AND inner_path = :inner_path AND is_downloaded = 0",
-            {"now": int(time.time()), "site_id": self.contents.db.site_ids[self.site.address], "inner_path": file_inner_path}
+            {"now": int(time.time(
+            )), "site_id": self.contents.db.site_ids[self.site.address], "inner_path": file_inner_path}
         )
 
         return super(ContentManagerPlugin, self).optionalDownloaded(inner_path, hash_id, size, own)
@@ -74,11 +78,13 @@ class ContentManagerPlugin(object):
     def optionalRemoved(self, inner_path, hash_id, size=None):
         res = self.contents.db.execute(
             "UPDATE file_optional SET is_downloaded = 0, is_pinned = 0, peer = peer - 1 WHERE site_id = :site_id AND inner_path = :inner_path AND is_downloaded = 1",
-            {"site_id": self.contents.db.site_ids[self.site.address], "inner_path": inner_path}
+            {"site_id": self.contents.db.site_ids[self.site.address],
+                "inner_path": inner_path}
         )
 
         if res.rowcount > 0:
-            back = super(ContentManagerPlugin, self).optionalRemoved(inner_path, hash_id, size)
+            back = super(ContentManagerPlugin, self).optionalRemoved(
+                inner_path, hash_id, size)
             # Re-add to hashfield if we have other file with the same hash_id
             if self.isDownloaded(hash_id=hash_id, force_check_db=True):
                 self.hashfield.appendHashId(hash_id)
@@ -88,11 +94,13 @@ class ContentManagerPlugin(object):
         return back
 
     def optionalRenamed(self, inner_path_old, inner_path_new):
-        back = super(ContentManagerPlugin, self).optionalRenamed(inner_path_old, inner_path_new)
+        back = super(ContentManagerPlugin, self).optionalRenamed(
+            inner_path_old, inner_path_new)
         self.cache_is_pinned = {}
         self.contents.db.execute(
             "UPDATE file_optional SET inner_path = :inner_path_new WHERE site_id = :site_id AND inner_path = :inner_path_old",
-            {"site_id": self.contents.db.site_ids[self.site.address], "inner_path_old": inner_path_old, "inner_path_new": inner_path_new}
+            {"site_id": self.contents.db.site_ids[self.site.address],
+                "inner_path_old": inner_path_old, "inner_path_new": inner_path_new}
         )
         return back
 
@@ -103,7 +111,8 @@ class ContentManagerPlugin(object):
         if inner_path:
             res = self.contents.db.execute(
                 "SELECT is_downloaded FROM file_optional WHERE site_id = :site_id AND inner_path = :inner_path LIMIT 1",
-                {"site_id": self.contents.db.site_ids[self.site.address], "inner_path": inner_path}
+                {"site_id": self.contents.db.site_ids[self.site.address],
+                    "inner_path": inner_path}
             )
         else:
             res = self.contents.db.execute(
@@ -123,7 +132,8 @@ class ContentManagerPlugin(object):
 
         res = self.contents.db.execute(
             "SELECT is_pinned FROM file_optional WHERE site_id = :site_id AND inner_path = :inner_path LIMIT 1",
-            {"site_id": self.contents.db.site_ids[self.site.address], "inner_path": inner_path}
+            {"site_id": self.contents.db.site_ids[self.site.address],
+                "inner_path": inner_path}
         )
         row = res.fetchone()
 
@@ -133,19 +143,22 @@ class ContentManagerPlugin(object):
             is_pinned = False
 
         self.cache_is_pinned[inner_path] = is_pinned
-        self.site.log.debug("Cache set is pinned: %s %s" % (inner_path, is_pinned))
+        self.site.log.debug("Cache set is pinned: %s %s" %
+                            (inner_path, is_pinned))
 
         return is_pinned
 
     def setPin(self, inner_path, is_pinned):
         content_db = self.contents.db
         site_id = content_db.site_ids[self.site.address]
-        content_db.execute("UPDATE file_optional SET is_pinned = %d WHERE ?" % is_pinned, {"site_id": site_id, "inner_path": inner_path})
+        content_db.execute("UPDATE file_optional SET is_pinned = %d WHERE ?" % is_pinned, {
+                           "site_id": site_id, "inner_path": inner_path})
         self.cache_is_pinned = {}
 
     def optionalDelete(self, inner_path):
         if self.isPinned(inner_path):
-            self.site.log.debug("Skip deleting pinned optional file: %s" % inner_path)
+            self.site.log.debug(
+                "Skip deleting pinned optional file: %s" % inner_path)
             return False
         else:
             return super(ContentManagerPlugin, self).optionalDelete(inner_path)
@@ -156,7 +169,8 @@ class WorkerManagerPlugin(object):
     def doneTask(self, task):
         super(WorkerManagerPlugin, self).doneTask(task)
 
-        if task["optional_hash_id"] and not self.tasks:  # Execute delayed queries immedietly after tasks finished
+        # Execute delayed queries immedietly after tasks finished
+        if task["optional_hash_id"] and not self.tasks:
             ContentDbPlugin.content_db.processDelayed()
 
 
@@ -166,7 +180,8 @@ class UiRequestPlugin(object):
         global access_log
         path_parts = super(UiRequestPlugin, self).parsePath(path)
         if path_parts:
-            site_id = ContentDbPlugin.content_db.site_ids.get(path_parts["request_address"])
+            site_id = ContentDbPlugin.content_db.site_ids.get(
+                path_parts["request_address"])
             if site_id:
                 if ContentDbPlugin.content_db.isOptionalFile(site_id, path_parts["inner_path"]):
                     access_log[site_id][path_parts["inner_path"]] = 1
@@ -215,14 +230,16 @@ class SitePlugin(object):
             return super(SitePlugin, self).fileForgot(inner_path)
 
     def fileDone(self, inner_path):
-        if "|" in inner_path and self.bad_files.get(inner_path, 0) > 5:  # Idle optional file done
+        # Idle optional file done
+        if "|" in inner_path and self.bad_files.get(inner_path, 0) > 5:
             inner_path_file = re.sub(r"\|.*", "", inner_path)
             num_changed = 0
             for key, val in self.bad_files.items():
                 if key.startswith(inner_path_file) and val > 1:
                     self.bad_files[key] = 1
                     num_changed += 1
-            self.log.debug("Idle optional file piece done, changed retry number of %s pieces." % num_changed)
+            self.log.debug(
+                "Idle optional file piece done, changed retry number of %s pieces." % num_changed)
             if num_changed:
                 gevent.spawn(self.retryBadFiles)
 
@@ -233,7 +250,9 @@ class SitePlugin(object):
 class ConfigPlugin(object):
     def createArguments(self):
         group = self.parser.add_argument_group("OptionalManager plugin")
-        group.add_argument('--optional_limit', help='Limit total size of optional files', default="10%", metavar="GB or free space %")
-        group.add_argument('--optional_limit_exclude_minsize', help='Exclude files larger than this limit from optional size limit calculation', default=20, metavar="MB", type=int)
+        group.add_argument('--optional_limit', help='Limit total size of optional files',
+                           default="10%", metavar="GB or free space %")
+        group.add_argument('--optional_limit_exclude_minsize',
+                           help='Exclude files larger than this limit from optional size limit calculation', default=20, metavar="MB", type=int)
 
         return super(ConfigPlugin, self).createArguments()

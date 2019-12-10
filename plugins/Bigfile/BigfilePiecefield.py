@@ -122,7 +122,7 @@ class BigfilePiecefieldPacked(Piecefield):
 
 if __name__ == "__main__":
     import os
-    import psutil
+    from . import psutil
     import time
     testdata = b"\x01" * 100 + b"\x00" * 900 + b"\x01" * 4000 + b"\x00" * 4999 + b"\x01"
     meminfo = psutil.Process(os.getpid()).memory_info

@@ -3,10 +3,10 @@ import itertools
 
 import gevent
 
-from Config import config
-from util import helper
-from util.Flag import flag
-from Plugin import PluginManager
+from src.Config import config
+from src.util import helper
+from src.util.Flag import flag
+from src.Plugin import PluginManager
 from .ChartDb import ChartDb
 from .ChartCollector import ChartCollector
 

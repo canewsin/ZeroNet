@@ -4,11 +4,11 @@ import json
 import shutil
 import time
 
-from Plugin import PluginManager
-from Config import config
-from Debug import Debug
-from Translate import Translate
-from util.Flag import flag
+from src.Plugin import PluginManager
+from src.Config import config
+from src.Debug import Debug
+from src.Translate import Translate
+from src.util.Flag import flag
 
 
 plugin_dir = os.path.dirname(__file__)
@@ -46,16 +46,19 @@ class UiRequestPlugin(object):
 
     def actionUiMedia(self, path, *args, **kwargs):
         if path.startswith("/uimedia/plugins/plugin_manager/"):
-            file_path = path.replace("/uimedia/plugins/plugin_manager/", plugin_dir + "/media/")
+            file_path = path.replace(
+                "/uimedia/plugins/plugin_manager/", plugin_dir + "/media/")
             if config.debug and (file_path.endswith("all.js") or file_path.endswith("all.css")):
                 # If debugging merge *.css to all.css and *.js to all.js
-                from Debug import DebugMedia
+                from src.Debug import DebugMedia
                 DebugMedia.merge(file_path)
 
             if file_path.endswith("js"):
-                data = _.translateData(open(file_path).read(), mode="js").encode("utf8")
+                data = _.translateData(
+                    open(file_path).read(), mode="js").encode("utf8")
             elif file_path.endswith("html"):
-                data = _.translateData(open(file_path).read(), mode="html").encode("utf8")
+                data = _.translateData(
+                    open(file_path).read(), mode="html").encode("utf8")
             else:
                 data = open(file_path, "rb").read()
 
@@ -81,18 +84,22 @@ class UiWebsocketPlugin(object):
                         (plugin["name"], Debug.formatException(err))
                     )
             if plugin_info:
-                plugin_info = restrictDictValues(plugin_info)  # For security reasons don't allow complex values
+                # For security reasons don't allow complex values
+                plugin_info = restrictDictValues(plugin_info)
                 plugin["info"] = plugin_info
 
             if plugin["source"] != "builtin":
                 plugin_site = self.server.sites.get(plugin["source"])
                 if plugin_site:
                     try:
-                        plugin_site_info = plugin_site.storage.loadJson(plugin["inner_path"] + "/plugin_info.json")
+                        plugin_site_info = plugin_site.storage.loadJson(
+                            plugin["inner_path"] + "/plugin_info.json")
                         plugin_site_info = restrictDictValues(plugin_site_info)
                         plugin["site_info"] = plugin_site_info
-                        plugin["site_title"] = plugin_site.content_manager.contents["content.json"].get("title")
-                        plugin_key = "%s/%s" % (plugin["source"], plugin["inner_path"])
+                        plugin["site_title"] = plugin_site.content_manager.contents["content.json"].get(
+                            "title")
+                        plugin_key = "%s/%s" % (plugin["source"],
+                                                plugin["inner_path"])
                         plugin["updated"] = plugin_key in PluginManager.plugin_manager.plugins_updated
                     except Exception:
                         pass
@@ -140,15 +147,20 @@ class UiWebsocketPlugin(object):
                 raise Exception("Directory not found on the site")
 
             try:
-                plugin_info = site.storage.loadJson(inner_path + "/plugin_info.json")
-                plugin_data = (plugin_info["rev"], plugin_info["description"], plugin_info["name"])
+                plugin_info = site.storage.loadJson(
+                    inner_path + "/plugin_info.json")
+                plugin_data = (
+                    plugin_info["rev"], plugin_info["description"], plugin_info["name"])
             except Exception as err:
-                raise Exception("Invalid plugin_info.json: %s" % Debug.formatExceptionMessage(err))
+                raise Exception("Invalid plugin_info.json: %s" %
+                                Debug.formatExceptionMessage(err))
 
             source_path = site.storage.getPath(inner_path)
 
-        target_path = plugin_manager.path_installed_plugins + "/" + address + "/" + inner_path
-        plugin_config = plugin_manager.config.setdefault(site.address, {}).setdefault(inner_path, {})
+        target_path = plugin_manager.path_installed_plugins + \
+            "/" + address + "/" + inner_path
+        plugin_config = plugin_manager.config.setdefault(
+            site.address, {}).setdefault(inner_path, {})
 
         # Make sure plugin (not)installed
         if action in ("add", "add_request") and os.path.isdir(target_path):
@@ -195,13 +207,15 @@ class UiWebsocketPlugin(object):
     @flag.no_multiuser
     def actionPluginAddRequest(self, to, inner_path):
         self.pluginAction("add_request", self.site.address, inner_path)
-        plugin_info = self.site.storage.loadJson(inner_path + "/plugin_info.json")
+        plugin_info = self.site.storage.loadJson(
+            inner_path + "/plugin_info.json")
         warning = "<b>Warning!<br/>Plugins has the same permissions as the ZeroNet client.<br/>"
         warning += "Do not install it if you don't trust the developer.</b>"
 
         self.cmd(
             "confirm",
-            ["Install new plugin: %s?<br>%s" % (plugin_info["name"], warning), "Trust & Install"],
+            ["Install new plugin: %s?<br>%s" %
+                (plugin_info["name"], warning), "Trust & Install"],
             lambda res: self.doPluginAdd(to, inner_path, res)
         )
 
@@ -217,5 +231,6 @@ class UiWebsocketPlugin(object):
     def actionPluginUpdate(self, to, address, inner_path):
         self.pluginAction("update", address, inner_path)
         PluginManager.plugin_manager.saveConfig()
-        PluginManager.plugin_manager.plugins_updated["%s/%s" % (address, inner_path)] = True
+        PluginManager.plugin_manager.plugins_updated["%s/%s" %
+                                                     (address, inner_path)] = True
         return "ok"

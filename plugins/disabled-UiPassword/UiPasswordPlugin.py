@@ -1,3 +1,4 @@
+from src.Translate import translate as lang
 import string
 import random
 import time
@@ -5,9 +6,9 @@ import json
 import re
 import os
 
-from Config import config
-from Plugin import PluginManager
-from util import helper
+from src.Config import config
+from src.Plugin import PluginManager
+from src.util import helper
 
 
 plugin_dir = os.path.dirname(__file__)
@@ -19,7 +20,8 @@ if "sessions" not in locals().keys():  # To keep sessions between module reloads
 def showPasswordAdvice(password):
     error_msgs = []
     if not password or not isinstance(password, str):
-        error_msgs.append("You have enabled <b>UiPassword</b> plugin, but you forgot to set a password!")
+        error_msgs.append(
+            "You have enabled <b>UiPassword</b> plugin, but you forgot to set a password!")
     elif len(password) < 8:
         error_msgs.append("You are using a very short UI password!")
     return error_msgs
@@ -65,8 +67,11 @@ class UiRequestPlugin(object):
                 url = self.env.get("HTTP_REFERER", "")
                 if not url or re.sub(r"\?.*", "", url).endswith("/Login"):
                     url = "/" + config.homepage
-                cookie_header = ('Set-Cookie', "session_id=%s;path=/;max-age=2592000;" % session_id)  # Max age = 30 days
-                self.start_response('301 Redirect', [('Location', url), cookie_header])
+                # Max age = 30 days
+                cookie_header = (
+                    'Set-Cookie', "session_id=%s;path=/;max-age=2592000;" % session_id)
+                self.start_response(
+                    '301 Redirect', [('Location', url), cookie_header])
                 yield "Redirecting..."
 
             else:
@@ -84,9 +89,11 @@ class UiRequestPlugin(object):
     def cleanup(cls):
         cls.last_cleanup = time.time()
         for session_id, session in list(cls.sessions.items()):
-            if session["keep"] and time.time() - session["added"] > 60 * 60 * 24 * 60:  # Max 60days for keep sessions
+            # Max 60days for keep sessions
+            if session["keep"] and time.time() - session["added"] > 60 * 60 * 24 * 60:
                 del(cls.sessions[session_id])
-            elif not session["keep"] and time.time() - session["added"] > 60 * 60 * 24:  # Max 24h for non-keep sessions
+            # Max 24h for non-keep sessions
+            elif not session["keep"] and time.time() - session["added"] > 60 * 60 * 24:
                 del(cls.sessions[session_id])
 
     # Action: Display sessions
@@ -116,12 +123,12 @@ class UiRequestPlugin(object):
 class ConfigPlugin(object):
     def createArguments(self):
         group = self.parser.add_argument_group("UiPassword plugin")
-        group.add_argument('--ui_password', help='Password to access UiServer', default=None, metavar="password")
+        group.add_argument(
+            '--ui_password', help='Password to access UiServer', default=None, metavar="password")
 
         return super(ConfigPlugin, self).createArguments()
 
 
-from Translate import translate as lang
 @PluginManager.registerTo("UiWebsocket")
 class UiWebsocketPlugin(object):
     def actionUiLogout(self, to):

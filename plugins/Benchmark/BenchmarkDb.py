@@ -3,8 +3,8 @@ import json
 import contextlib
 import time
 
-from Plugin import PluginManager
-from Config import config
+from src.Plugin import PluginManager
+from src.Config import config
 
 
 @PluginManager.registerTo("Actions")
@@ -16,14 +16,14 @@ class ActionsPlugin:
             {"func": self.testDbInsert, "num": 10, "time_standard": 0.91},
             {"func": self.testDbInsertMultiuser, "num": 1, "time_standard": 0.57},
             {"func": self.testDbQueryIndexed, "num": 1000, "time_standard": 0.84},
-            {"func": self.testDbQueryNotIndexed, "num": 1000, "time_standard": 1.30}
+            {"func": self.testDbQueryNotIndexed,
+                "num": 1000, "time_standard": 1.30}
         ])
         return tests
 
-
     @contextlib.contextmanager
     def getTestDb(self):
-        from Db import Db
+        from src.Db import Db
         path = "%s/benchmark.db" % config.data_dir
         if os.path.isfile(path):
             os.unlink(path)
@@ -73,11 +73,14 @@ class ActionsPlugin:
                 db.checkTables()
                 data = {"test": []}
                 for i in range(1000):  # 1000 line of data
-                    data["test"].append({"test_id": i, "title": "Testdata for %s message %s" % (u, i)})
-                json.dump(data, open("%s/test_%s.json" % (config.data_dir, u), "w"))
+                    data["test"].append(
+                        {"test_id": i, "title": "Testdata for %s message %s" % (u, i)})
+                json.dump(data, open("%s/test_%s.json" %
+                                     (config.data_dir, u), "w"))
                 db.updateJson("%s/test_%s.json" % (config.data_dir, u))
                 os.unlink("%s/test_%s.json" % (config.data_dir, u))
-                assert db.execute("SELECT COUNT(*) FROM test").fetchone()[0] == 1000
+                assert db.execute(
+                    "SELECT COUNT(*) FROM test").fetchone()[0] == 1000
             yield "."
 
     def fillTestDb(self, db):
@@ -87,8 +90,10 @@ class ActionsPlugin:
         for u in range(100, 200):  # 100 user
             data = {"test": []}
             for i in range(100):  # 1000 line of data
-                data["test"].append({"test_id": i, "title": "Testdata for %s message %s" % (u, i)})
-            json.dump(data, open("%s/test_%s.json" % (config.data_dir, u), "w"))
+                data["test"].append(
+                    {"test_id": i, "title": "Testdata for %s message %s" % (u, i)})
+            json.dump(data, open("%s/test_%s.json" %
+                                 (config.data_dir, u), "w"))
             db.updateJson("%s/test_%s.json" % (config.data_dir, u), cur=cur)
             os.unlink("%s/test_%s.json" % (config.data_dir, u))
             if u % 10 == 0:
@@ -100,7 +105,8 @@ class ActionsPlugin:
             with self.getTestDb() as db:
                 for progress in self.fillTestDb(db):
                     yield progress
-                num_rows = db.execute("SELECT COUNT(*) FROM test").fetchone()[0]
+                num_rows = db.execute(
+                    "SELECT COUNT(*) FROM test").fetchone()[0]
                 assert num_rows == 10000, "%s != 10000" % num_rows
 
     def testDbQueryIndexed(self, num_run=1):
@@ -112,7 +118,8 @@ class ActionsPlugin:
             found_total = 0
             for i in range(num_run):  # 1000x by test_id
                 found = 0
-                res = db.execute("SELECT * FROM test WHERE test_id = %s" % (i % 100))
+                res = db.execute(
+                    "SELECT * FROM test WHERE test_id = %s" % (i % 100))
                 for row in res:
                     found_total += 1
                     found += 1
