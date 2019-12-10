@@ -17,6 +17,10 @@ def getOpensslPath():
         ]
     elif sys.platform == "cygwin":
         lib_paths = ["/bin/cygcrypto-1.0.0.dll"]
+    elif os.path.isfile("../lib/libcrypto.so"):  # ZeroBundle OSX
+        lib_paths = ["../lib/libcrypto.so"]
+    elif os.path.isfile("/opt/lib/libcrypto.so.1.0.0"):  # For optware and entware
+        lib_paths = ["/opt/lib/libcrypto.so.1.0.0"]
     else:
         lib_paths = [
             "../runtime/lib/libcrypto.so.1.1",  # ZeroBundle Linux
@@ -24,6 +28,18 @@ def getOpensslPath():
             "/opt/lib/libcrypto.so.1.0.0",  # For optware and entware
             "/usr/local/ssl/lib/libcrypto.so"
         ]
+
+    from ..Config import config
+    # if config.start_dir.endwith("/app.zip/zeronet"):#cache/chaquopy/AssetFinder
+    #     lib_path = config.start_dir.replace("app.zip/zeronet","arm64-v8a.zip/_ssl.so")
+
+    print(config.start_dir)
+    if config.start_dir.endwith("/app.zip/zeronet"):
+        try:
+            lib_dir = "/system/lib/libcrypto.so"
+        except Exception as err:
+            logging.debug("OpenSSL lib not found in: %s (%s)" % (lib_dir, err))
+
 
     for lib_path in lib_paths:
         if os.path.isfile(lib_path):
@@ -45,7 +61,7 @@ def getOpensslPath():
                 logging.debug("OpenSSL lib not found in: %s (%s)" % (path, err))
 
     lib_path = (
-        find_library_original('ssl.so') or find_library_original('ssl') or
+        find_library_original('ssl.so.1.0') or find_library_original('ssl.so') or find_library_original('ssl') or
         find_library_original('crypto') or find_library_original('libcrypto') or 'libeay32'
     )
 

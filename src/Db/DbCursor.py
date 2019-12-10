@@ -1,7 +1,6 @@
 import time
 import re
-from util import helper
-
+from ..util import helper
 
 # Special sqlite cursor
 

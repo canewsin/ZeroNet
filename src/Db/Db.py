@@ -9,12 +9,12 @@ import sys
 
 import gevent
 
-from Debug import Debug
+from ..Debug import Debug
 from .DbCursor import DbCursor
-from util import SafeRe
-from util import helper
-from util import ThreadPool
-from Config import config
+from ..util import SafeRe
+from ..util import helper
+from ..util import ThreadPool
+from ..Config import config
 
 thread_pool_db = ThreadPool.ThreadPool(config.threads_db)
 
@@ -223,6 +223,10 @@ class Db(object):
             self.connect()
 
         cur = DbCursor(self.conn, self)
+        cur.execute('PRAGMA journal_mode=WAL')
+        if self.foreign_keys:
+            cur.execute("PRAGMA foreign_keys = ON")
+
         return cur
 
     def getSharedCursor(self):
@@ -309,6 +313,7 @@ class Db(object):
             except Exception as err:
                 self.log.error("Error creating table %s: %s" % (table_name, Debug.formatException(err)))
                 raise DbTableError(err, table_name)
+                #return False
 
         self.log.debug("Db check done in %.3fs, changed tables: %s" % (time.time() - s, changed_tables))
         if changed_tables:

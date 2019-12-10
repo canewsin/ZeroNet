@@ -5,12 +5,13 @@ import ssl
 import hashlib
 import random
 
-from Config import config
-from util import helper
+from ..Config import config
+from ..util import helper
 
 
 class CryptConnectionManager:
     def __init__(self):
+        # OpenSSL params
         if sys.platform.startswith("win"):
             self.openssl_bin = "tools\\openssl\\openssl.exe"
         elif config.dist_type.startswith("bundle_linux"):

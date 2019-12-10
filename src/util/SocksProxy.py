@@ -1,7 +1,7 @@
 import socket
 
 import socks
-from Config import config
+from ..Config import config
 
 def create_connection(address, timeout=None, source_address=None):
     if address in config.ip_local:

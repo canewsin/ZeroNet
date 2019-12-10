@@ -6,14 +6,13 @@ import importlib
 import gevent
 import gevent.hub
 
-from Config import config
-from . import Debug
+from ..Config import config
 
 last_error = None
 
 def shutdown(reason="Unknown"):
     logging.info("Shutting down (reason: %s)..." % reason)
-    import main
+    from . import main
     if "file_server" in dir(main):
         try:
             gevent.spawn(main.file_server.stop)
@@ -50,7 +49,7 @@ def handleErrorNotify(*args, **kwargs):
     if err.__name__ == "KeyboardInterrupt":
         shutdown("Keyboard interrupt")
     elif err.__name__ != "Notify":
-        logging.error("Unhandled exception: %s" % Debug.formatException(args))
+        logging.error("Unhandled exception: %s" % [args])
         sys.__excepthook__(*args, **kwargs)
 
 
@@ -73,20 +72,15 @@ else:
     gevent.Greenlet = gevent.greenlet.Greenlet = ErrorhookedGreenlet
     importlib.reload(gevent)
 
-def handleGreenletError(context, type, value, tb):
-    if context.__class__ is tuple and context[0].__class__.__name__ == "ThreadPool":
-        # Exceptions in ThreadPool will be handled in the main Thread
-        return None
-
+def handleGreenletError(self, context, type, value, tb):
     if isinstance(value, str):
         # Cython can raise errors where the value is a plain string
         # e.g., AttributeError, "_semaphore.Semaphore has no attr", <traceback>
         value = type(value)
-
-    if not issubclass(type, gevent.get_hub().NOT_ERROR):
+    if not issubclass(type, self.NOT_ERROR):
         sys.excepthook(type, value, tb)
 
-gevent.get_hub().handle_error = handleGreenletError
+gevent.hub.Hub.handle_error = handleGreenletError
 
 try:
     signal.signal(signal.SIGTERM, lambda signum, stack_frame: shutdown("SIGTERM"))

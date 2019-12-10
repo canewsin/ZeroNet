@@ -484,7 +484,7 @@ class Config(object):
                 setattr(self, key, val)
 
     def loadPlugins(self):
-        from Plugin import PluginManager
+        from .Plugin import PluginManager
 
         @PluginManager.acceptPlugins
         class ConfigPlugin(object):
@@ -546,8 +546,8 @@ class Config(object):
         open(self.config_file, "w").write("\n".join(lines))
 
     def getServerInfo(self):
-        from Plugin import PluginManager
-        import main
+        from .Plugin import PluginManager
+        from . import main
 
         info = {
             "platform": sys.platform,

@@ -6,7 +6,7 @@ import re
 import html
 import string
 
-from Config import config
+from ..Config import config
 
 translates = []
 
@@ -28,7 +28,7 @@ class EscapeProxy(dict):
 class Translate(dict):
     def __init__(self, lang_dir=None, lang=None):
         if not lang_dir:
-            lang_dir = os.path.dirname(__file__) + "/languages/"
+            lang_dir = "src/Translate/languages/"
         if not lang:
             lang = config.language
         self.lang = lang
@@ -38,7 +38,7 @@ class Translate(dict):
 
         if config.debug:
             # Auto reload FileRequest on change
-            from Debug import DebugReloader
+            from ..Debug import DebugReloader
             DebugReloader.watcher.addCallback(self.load)
 
         translates.append(self)

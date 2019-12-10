@@ -9,9 +9,9 @@ from gevent.pywsgi import WSGIHandler
 from geventwebsocket.handler import WebSocketHandler
 
 from .UiRequest import UiRequest
-from Site import SiteManager
-from Config import config
-from Debug import Debug
+from ..Site import SiteManager
+from ..Config import config
+from ..Debug import Debug
 import importlib
 
 
@@ -37,11 +37,13 @@ class UiWSGIHandler(WSGIHandler):
 
     def handleError(self, err):
         if config.debug:  # Allow websocket errors to appear on /Debug
-            import main
+            from .. import main
             main.DebugHook.handleError()
         else:
-            ui_request = UiRequest(self.server, {}, self.environ, self.start_response)
-            block_gen = ui_request.error500("UiWSGIHandler error: %s" % Debug.formatExceptionMessage(err))
+            ui_request = UiRequest(
+                self.server, {}, self.environ, self.start_response)
+            block_gen = ui_request.error500(
+                "UiWSGIHandler error: %s" % Debug.formatExceptionMessage(err))
             for block in block_gen:
                 self.write(block)
 
@@ -52,9 +54,11 @@ class UiWSGIHandler(WSGIHandler):
                 ws_handler.__dict__ = self.__dict__  # Match class variables
                 ws_handler.run_application()
             except (ConnectionAbortedError, ConnectionResetError) as err:
-                logging.warning("UiWSGIHandler websocket connection error: %s" % err)
+                logging.warning(
+                    "UiWSGIHandler websocket connection error: %s" % err)
             except Exception as err:
-                logging.error("UiWSGIHandler websocket error: %s" % Debug.formatException(err))
+                logging.error("UiWSGIHandler websocket error: %s" %
+                              Debug.formatException(err))
                 self.handleError(err)
         else:  # Standard HTTP request
             try:
@@ -62,7 +66,8 @@ class UiWSGIHandler(WSGIHandler):
             except (ConnectionAbortedError, ConnectionResetError) as err:
                 logging.warning("UiWSGIHandler connection error: %s" % err)
             except Exception as err:
-                logging.error("UiWSGIHandler error: %s" % Debug.formatException(err))
+                logging.error("UiWSGIHandler error: %s" %
+                              Debug.formatException(err))
                 self.handleError(err)
 
     def handle(self):
@@ -111,7 +116,7 @@ class UiServer:
 
     # After WebUI started
     def afterStarted(self):
-        from util import Platform
+        from ..util import Platform
         Platform.setMaxfilesopened(config.max_files_opened)
 
     # Handle WSGI request
@@ -128,7 +133,8 @@ class UiServer:
             try:
                 return ui_request.route(path)
             except Exception as err:
-                logging.debug("UiRequest error: %s" % Debug.formatException(err))
+                logging.debug("UiRequest error: %s" %
+                              Debug.formatException(err))
                 return ui_request.error500("Err: %s" % Debug.formatException(err))
 
     # Reload the UiRequest class to prevent restarts in debug mode
@@ -138,7 +144,8 @@ class UiServer:
         import sys
         importlib.reload(sys.modules["User.UserManager"])
         importlib.reload(sys.modules["Ui.UiWebsocket"])
-        UiRequest = imp.load_source("UiRequest", "src/Ui/UiRequest.py").UiRequest
+        UiRequest = imp.load_source(
+            "UiRequest", "src/Ui/UiRequest.py").UiRequest
         # UiRequest.reload()
 
     # Bind and run the server
@@ -148,7 +155,7 @@ class UiServer:
 
         if config.debug:
             # Auto reload UiRequest on change
-            from Debug import DebugReloader
+            from ..Debug import DebugReloader
             DebugReloader.watcher.addCallback(self.reload)
 
             # Werkzeug Debugger
@@ -156,14 +163,18 @@ class UiServer:
                 from werkzeug.debug import DebuggedApplication
                 handler = DebuggedApplication(self.handleRequest, evalex=True)
             except Exception as err:
-                self.log.info("%s: For debugging please download Werkzeug (http://werkzeug.pocoo.org/)" % err)
-                from Debug import DebugReloader
-        self.log.write = lambda msg: self.log.debug(msg.strip())  # For Wsgi access.log
+                self.log.info(
+                    "%s: For debugging please download Werkzeug (http://werkzeug.pocoo.org/)" % err)
+                from ..Debug import DebugReloader
+        self.log.write = lambda msg: self.log.debug(
+            msg.strip())  # For Wsgi access.log
         self.log.info("--------------------------------------")
         if ":" in config.ui_ip:
-            self.log.info("Web interface: http://[%s]:%s/" % (config.ui_ip, config.ui_port))
+            self.log.info(
+                "Web interface: http://[%s]:%s/" % (config.ui_ip, config.ui_port))
         else:
-            self.log.info("Web interface: http://%s:%s/" % (config.ui_ip, config.ui_port))
+            self.log.info("Web interface: http://%s:%s/" %
+                          (config.ui_ip, config.ui_port))
         self.log.info("--------------------------------------")
 
         if config.open_browser and config.open_browser != "False":
@@ -174,19 +185,22 @@ class UiServer:
                     browser = webbrowser.get()
                 else:
                     browser = webbrowser.get(config.open_browser)
-                url = "http://%s:%s/%s" % (config.ui_ip if config.ui_ip != "*" else "127.0.0.1", config.ui_port, config.homepage)
+                url = "http://%s:%s/%s" % (config.ui_ip if config.ui_ip !=
+                                           "*" else "127.0.0.1", config.ui_port, config.homepage)
                 gevent.spawn_later(0.3, browser.open, url, new=2)
             except Exception as err:
                 print("Error starting browser: %s" % err)
 
-        self.server = WSGIServer((self.ip, self.port), handler, handler_class=UiWSGIHandler, log=self.log)
+        self.server = WSGIServer(
+            (self.ip, self.port), handler, handler_class=UiWSGIHandler, log=self.log)
         self.server.sockets = {}
         self.afterStarted()
         try:
             self.server.serve_forever()
         except Exception as err:
-            self.log.error("Web interface bind error, must be running already, exiting.... %s" % err)
-            import main
+            self.log.error(
+                "Web interface bind error, must be running already, exiting.... %s" % err)
+            from .. import main
             main.file_server.stop()
         self.log.debug("Stopped.")
 
@@ -210,7 +224,7 @@ class UiServer:
         self.log.debug("Socket closed: %s" % sock_closed)
         time.sleep(0.1)
         if config.debug:
-            from Debug import DebugReloader
+            from ..Debug import DebugReloader
             DebugReloader.watcher.stop()
 
         self.server.socket.close()

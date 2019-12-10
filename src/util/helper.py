@@ -11,7 +11,7 @@ import json
 
 import gevent
 
-from Config import config
+from ..Config import config
 
 
 def atomicWrite(dest, content, mode="wb"):
@@ -29,7 +29,7 @@ def atomicWrite(dest, content, mode="wb"):
             os.unlink(dest + "-tmpold")  # Remove old file
         return True
     except Exception as err:
-        from Debug import Debug
+        from ..Debug import Debug
         logging.error(
             "File %s write failed: %s, (%s) reverting..." %
             (dest, Debug.formatException(err), Debug.formatStack())
@@ -68,7 +68,7 @@ def jsonDumps(data):
 def openLocked(path, mode="wb"):
     try:
         if os.name == "posix":
-            import fcntl
+            from .. import fcntl
             f = open(path, mode)
             fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
         elif os.name == "nt":

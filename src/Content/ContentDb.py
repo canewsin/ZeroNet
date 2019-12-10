@@ -1,9 +1,9 @@
 import os
 
-from Db.Db import Db, DbTableError
-from Config import config
-from Plugin import PluginManager
-from Debug import Debug
+from ..Db.Db import Db, DbTableError
+from ..Config import config
+from ..Plugin import PluginManager
+from ..Debug import Debug
 
 
 @PluginManager.acceptPlugins
@@ -156,7 +156,6 @@ def getContentDb(path=None):
         path = "%s/content.db" % config.data_dir
     if path not in content_dbs:
         content_dbs[path] = ContentDb(path)
-        content_dbs[path].init()
     return content_dbs[path]
 
 getContentDb()  # Pre-connect to default one
